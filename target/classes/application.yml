@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: model-route-agent
+  config:
+    import:
+      - optional:classpath:models.yml
+      - optional:classpath:router.yml
+
+server:
+  port: 8080

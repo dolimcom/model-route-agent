@@ -1,0 +1,25 @@
+model-route:
+  router:
+    fallback-model-id: general-mock
+    keywords:
+      DAILY:
+        - 计划
+        - 提醒
+        - 日程
+        - todo
+      LITERARY:
+        - 小说
+        - 诗歌
+        - 润色
+        - 文案
+      CODING:
+        - java
+        - python
+        - bug
+        - 代码
+        - 编程
+      MATH:
+        - 数学
+        - 方程
+        - 微积分
+        - 概率
