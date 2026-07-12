@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
@@ -50,14 +49,6 @@ public class RuleEngine {
         }
 
         return new RuleAnalysis(signals);
-    }
-
-    public TaskType selectTaskType(RuleAnalysis analysis) {
-        Optional<TaskType> strongTaskType = analysis.strongestTaskType();
-        if (strongTaskType.isPresent()) {
-            return strongTaskType.get();
-        }
-        return analysis.keywordCandidates().stream().findFirst().orElse(TaskType.GENERAL);
     }
 
     private void collectConfiguredKeywords(String normalizedQuestion, List<RuleSignal> signals) {

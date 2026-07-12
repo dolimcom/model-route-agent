@@ -16,7 +16,6 @@ class RuleEngineTest {
     void selectsCodingForCodeFence() {
         RuleAnalysis analysis = ruleEngine.analyze("请解释这段代码：```java\\nclass Demo {}\\n```");
 
-        assertThat(ruleEngine.selectTaskType(analysis)).isEqualTo(TaskType.CODING);
         assertThat(analysis.summaryFor(TaskType.CODING)).contains("code-fence");
     }
 
@@ -25,7 +24,6 @@ class RuleEngineTest {
         RuleAnalysis analysis = ruleEngine.analyze(
                 "java.lang.NullPointerException\\n  at com.example.Demo.main(Demo.java:10)");
 
-        assertThat(ruleEngine.selectTaskType(analysis)).isEqualTo(TaskType.CODING);
         assertThat(analysis.summaryFor(TaskType.CODING)).contains("stack-trace");
     }
 
@@ -33,7 +31,6 @@ class RuleEngineTest {
     void selectsMathForFormulaWithoutMathKeyword() {
         RuleAnalysis analysis = ruleEngine.analyze("请解方程 x^2 + 2x = 0");
 
-        assertThat(ruleEngine.selectTaskType(analysis)).isEqualTo(TaskType.MATH);
         assertThat(analysis.summaryFor(TaskType.MATH)).contains("math-expression");
     }
 
@@ -41,15 +38,13 @@ class RuleEngineTest {
     void selectsTaskUsingConfiguredKeyword() {
         RuleAnalysis analysis = ruleEngine.analyze("帮我润色这段文案");
 
-        assertThat(ruleEngine.selectTaskType(analysis)).isEqualTo(TaskType.LITERARY);
         assertThat(analysis.summaryFor(TaskType.LITERARY)).contains("keyword:润色");
     }
 
     @Test
-    void fallsBackToGeneralWhenNoSignalExists() {
+    void returnsNoSignalsForPlainQuestion() {
         RuleAnalysis analysis = ruleEngine.analyze("你好，请介绍一下你自己");
 
-        assertThat(ruleEngine.selectTaskType(analysis)).isEqualTo(TaskType.GENERAL);
         assertThat(analysis.signals()).isEmpty();
     }
 

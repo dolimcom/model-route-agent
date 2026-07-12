@@ -1,6 +1,12 @@
 model-route:
   router:
     fallback-model-id: general-mock
+    scoring:
+      keyword-weight: 2
+      code-syntax-weight: 1
+      strong-signal-weight: 4
+      minimum-score: 2
+      minimum-score-gap: 1
     keywords:
       DAILY:
         - 计划

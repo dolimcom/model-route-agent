@@ -4,6 +4,7 @@ import com.modelroute.domain.TaskType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -95,6 +96,10 @@ public class ModelRouteProperties {
         @NotEmpty(message = "model-route.router.keywords must not be empty")
         private Map<TaskType, List<String>> keywords = new EnumMap<>(TaskType.class);
 
+        @NotNull(message = "model-route.router.scoring must be configured")
+        @Valid
+        private Scoring scoring = new Scoring();
+
         public String getFallbackModelId() {
             return fallbackModelId;
         }
@@ -109,6 +114,72 @@ public class ModelRouteProperties {
 
         public void setKeywords(Map<TaskType, List<String>> keywords) {
             this.keywords = keywords;
+        }
+
+        public Scoring getScoring() {
+            return scoring;
+        }
+
+        public void setScoring(Scoring scoring) {
+            this.scoring = scoring;
+        }
+    }
+
+    public static class Scoring {
+
+        @Min(value = 1, message = "keyword-weight must be at least 1")
+        private int keywordWeight = 2;
+
+        @Min(value = 1, message = "code-syntax-weight must be at least 1")
+        private int codeSyntaxWeight = 1;
+
+        @Min(value = 1, message = "strong-signal-weight must be at least 1")
+        private int strongSignalWeight = 4;
+
+        @Min(value = 1, message = "minimum-score must be at least 1")
+        private int minimumScore = 2;
+
+        @Min(value = 1, message = "minimum-score-gap must be at least 1")
+        private int minimumScoreGap = 1;
+
+        public int getKeywordWeight() {
+            return keywordWeight;
+        }
+
+        public void setKeywordWeight(int keywordWeight) {
+            this.keywordWeight = keywordWeight;
+        }
+
+        public int getCodeSyntaxWeight() {
+            return codeSyntaxWeight;
+        }
+
+        public void setCodeSyntaxWeight(int codeSyntaxWeight) {
+            this.codeSyntaxWeight = codeSyntaxWeight;
+        }
+
+        public int getStrongSignalWeight() {
+            return strongSignalWeight;
+        }
+
+        public void setStrongSignalWeight(int strongSignalWeight) {
+            this.strongSignalWeight = strongSignalWeight;
+        }
+
+        public int getMinimumScore() {
+            return minimumScore;
+        }
+
+        public void setMinimumScore(int minimumScore) {
+            this.minimumScore = minimumScore;
+        }
+
+        public int getMinimumScoreGap() {
+            return minimumScoreGap;
+        }
+
+        public void setMinimumScoreGap(int minimumScoreGap) {
+            this.minimumScoreGap = minimumScoreGap;
         }
     }
 }

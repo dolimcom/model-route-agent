@@ -1,38 +1,47 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Build output
+/target/
+*.class
 
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
+# IntelliJ IDEA local state
+/.idea/
 *.iml
+*.iws
 *.ipr
 
-### Eclipse ###
-.apt_generated
+# IntelliJ HTTP client history and cookies
+/.idea/httpRequests/
+
+# Local runtime configuration and secrets
+.env
+.env.*
+!/\.env.example
+application-local.yml
+application-*.local.yml
+
+# Logs
+*.log
+/logs/
+
+# Eclipse
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+/build/
 
-### VS Code ###
-.vscode/
+# VS Code
+/.vscode/
 
-### Mac OS ###
+# Operating system files
 .DS_Store
+Thumbs.db
