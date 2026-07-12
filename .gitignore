@@ -17,6 +17,10 @@
 !/\.env.example
 application-local.yml
 application-*.local.yml
+models-local.yml
+models-*.local.yml
+models_local.yml
+models_*.local.yml
 
 # Logs
 *.log
