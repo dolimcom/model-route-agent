@@ -35,4 +35,22 @@ class ModelRouteApplicationTests {
                 .andExpect(jsonPath("$.route.taskType").value("CODING"))
                 .andExpect(jsonPath("$.route.modelId").value("coding-mock"));
     }
+
+    @Test
+    void chatEndpointRoutesMathExpressionWithoutConfiguredKeyword() throws Exception {
+        mockMvc.perform(post("/api/agent/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"Solve x^2 + 2x = 0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.route.taskType").value("MATH"))
+                .andExpect(jsonPath("$.route.modelId").value("math-mock"));
+    }
+
+    @Test
+    void modelsEndpointReturnsConfiguredRegistry() throws Exception {
+        mockMvc.perform(get("/api/agent/models"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("general-mock"))
+                .andExpect(jsonPath("$.length()").value(4));
+    }
 }

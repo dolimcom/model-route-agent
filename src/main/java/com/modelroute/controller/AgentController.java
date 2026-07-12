@@ -2,9 +2,12 @@ package com.modelroute.controller;
 
 import com.modelroute.dto.AgentRequest;
 import com.modelroute.dto.AgentResponse;
+import com.modelroute.config.ModelRouteProperties;
+import com.modelroute.service.ModelRegistry;
 import com.modelroute.service.MockAgentService;
 import jakarta.validation.Valid;
 import java.util.Map;
+import java.util.Collection;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,14 +20,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class AgentController {
 
     private final MockAgentService agentService;
+    private final ModelRegistry modelRegistry;
 
-    public AgentController(MockAgentService agentService) {
+    public AgentController(MockAgentService agentService, ModelRegistry modelRegistry) {
         this.agentService = agentService;
+        this.modelRegistry = modelRegistry;
     }
 
     @GetMapping("/health")
-    public Map<String, String> health() {
-        return Map.of("status", "UP", "application", "model-route-agent");
+    public Map<String, Object> health() {
+        return Map.of(
+                "status", "UP",
+                "application", "model-route-agent",
+                "registeredModels", modelRegistry.getRegisteredModels().size());
+    }
+
+    @GetMapping("/models")
+    public Collection<ModelRouteProperties.ModelDefinition> models() {
+        return modelRegistry.getRegisteredModels();
     }
 
     @PostMapping("/chat")

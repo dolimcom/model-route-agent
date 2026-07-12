@@ -4,3 +4,29 @@ Content-Type: application/json
 {
   "question": "请帮我分析这段 Java 代码的 bug"
 }
+
+### Inspect configured models
+GET http://localhost:8080/api/agent/models
+
+### Route a code fence without relying on a configured keyword
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请解释这段代码：```java\nclass Demo {}\n```"
+}
+
+### Route a math expression without relying on a configured keyword
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "Solve x^2 + 2x = 0"
+}
+### Route a Java stack trace
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请分析这个报错：\njava.lang.NullPointerException\n    at com.example.Demo.main(Demo.java:10)"
+}

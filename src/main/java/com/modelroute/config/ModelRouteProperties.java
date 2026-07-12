@@ -1,16 +1,27 @@
 package com.modelroute.config;
 
 import com.modelroute.domain.TaskType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @ConfigurationProperties(prefix = "model-route")
 public class ModelRouteProperties {
 
+    @NotEmpty(message = "model-route.models must contain at least one model")
+    @Valid
     private List<ModelDefinition> models = new ArrayList<>();
+
+    @NotNull(message = "model-route.router must be configured")
+    @Valid
     private Router router = new Router();
 
     public List<ModelDefinition> getModels() {
@@ -30,9 +41,17 @@ public class ModelRouteProperties {
     }
 
     public static class ModelDefinition {
+
+        @NotBlank(message = "model id must not be blank")
         private String id;
+
+        @NotBlank(message = "model display-name must not be blank")
         private String displayName;
+
+        @NotBlank(message = "model provider must not be blank")
         private String provider;
+
+        @NotEmpty(message = "model supported-tasks must not be empty")
         private List<TaskType> supportedTasks = new ArrayList<>();
 
         public String getId() {
@@ -69,7 +88,11 @@ public class ModelRouteProperties {
     }
 
     public static class Router {
+
+        @NotBlank(message = "model-route.router.fallback-model-id must not be blank")
         private String fallbackModelId;
+
+        @NotEmpty(message = "model-route.router.keywords must not be empty")
         private Map<TaskType, List<String>> keywords = new EnumMap<>(TaskType.class);
 
         public String getFallbackModelId() {

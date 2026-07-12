@@ -1,0 +1,114 @@
+package com.modelroute.service;
+
+import com.modelroute.config.ModelRouteProperties;
+import com.modelroute.domain.TaskType;
+
+import java.util.*;
+
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+/**
+ * Validates model configuration once at startup and provides immutable lookup access at runtime.
+ */
+@Service
+public class ModelRegistry implements InitializingBean {
+
+    private final ModelRouteProperties properties;
+    private Map<String, ModelRouteProperties.ModelDefinition> modelsById = Map.of();
+
+    public ModelRegistry(ModelRouteProperties properties) {
+        this.properties = properties;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        Map<String, ModelRouteProperties.ModelDefinition> registeredModels = new LinkedHashMap<>();
+
+        if (properties.getModels() == null || properties.getModels().isEmpty()) {
+            throw new IllegalStateException("At least one model must be configured");
+        }
+        for (ModelRouteProperties.ModelDefinition model : properties.getModels()) {
+            validateModel(model);
+            ModelRouteProperties.ModelDefinition previous = registeredModels.putIfAbsent(model.getId(), model);
+            if (previous != null) {
+                throw new IllegalStateException("Duplicate model id configured: " + model.getId());
+            }
+        }
+
+        validateRouter(registeredModels);
+        modelsById = Collections.unmodifiableMap(new LinkedHashMap<>(registeredModels));
+    }
+
+    public ModelRouteProperties.ModelDefinition getRequiredModel(String modelId) {
+        ModelRouteProperties.ModelDefinition model = modelsById.get(modelId);
+        if (model == null) {
+            throw new IllegalArgumentException("Unknown model id: " + modelId);
+        }
+        return model;
+    }
+
+    public ModelRouteProperties.ModelDefinition getFallbackModel() {
+        return getRequiredModel(properties.getRouter().getFallbackModelId());
+    }
+
+    public Optional<ModelRouteProperties.ModelDefinition> findFirstSupporting(TaskType taskType) {
+        return modelsById.values().stream()
+                .filter(model -> model.getSupportedTasks().contains(taskType))
+                .findFirst();
+    }
+
+    public Collection<ModelRouteProperties.ModelDefinition> getRegisteredModels() {
+        return List.copyOf(modelsById.values());
+    }
+
+    private void validateModel(ModelRouteProperties.ModelDefinition model) {
+        if (model == null) {
+            throw new IllegalStateException("Model configuration must not contain null entries");
+        }
+        if (!StringUtils.hasText(model.getId())) {
+            throw new IllegalStateException("Model id must not be blank");
+        }
+        if (!model.getId().equals(model.getId().trim())) {
+            throw new IllegalStateException("Model id must not contain leading or trailing whitespace: " + model.getId());
+        }
+        if (!StringUtils.hasText(model.getDisplayName())) {
+            throw new IllegalStateException("Model display-name must not be blank for " + model.getId());
+        }
+        if (!StringUtils.hasText(model.getProvider())) {
+            throw new IllegalStateException("Model provider must not be blank for " + model.getId());
+        }
+        if (model.getSupportedTasks() == null || model.getSupportedTasks().isEmpty()) {
+            throw new IllegalStateException("Model supported-tasks must not be empty for " + model.getId());
+        }
+        if (model.getSupportedTasks().stream().anyMatch(Objects::isNull)) {
+            throw new IllegalStateException("Model supported-tasks must not contain null for " + model.getId());
+        }
+    }
+
+    private void validateRouter(Map<String, ModelRouteProperties.ModelDefinition> registeredModels) {
+        ModelRouteProperties.Router router = properties.getRouter();
+        if (router == null || !StringUtils.hasText(router.getFallbackModelId())) {
+            throw new IllegalStateException("Router fallback-model-id must be configured");
+        }
+        if (!registeredModels.containsKey(router.getFallbackModelId())) {
+            throw new IllegalStateException(
+                    "Configured fallback model does not exist: " + router.getFallbackModelId());
+        }
+        if (router.getKeywords() == null || router.getKeywords().isEmpty()) {
+            throw new IllegalStateException("Router keywords must contain at least one task type");
+        }
+
+        List<TaskType> emptyKeywordTypes = new ArrayList<>();
+        for (Map.Entry<TaskType, List<String>> entry : router.getKeywords().entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isEmpty()
+                    || entry.getValue().stream().anyMatch(keyword -> !StringUtils.hasText(keyword))) {
+                emptyKeywordTypes.add(entry.getKey());
+            }
+        }
+        if (!emptyKeywordTypes.isEmpty()) {
+            throw new IllegalStateException("Router keywords must not be empty for task types: " + emptyKeywordTypes);
+        }
+    }
+}
