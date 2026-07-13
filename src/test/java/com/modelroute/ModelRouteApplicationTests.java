@@ -4,6 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ class ModelRouteApplicationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private ModelProviderDispatcher providerDispatcher;
@@ -84,5 +89,32 @@ class ModelRouteApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == 'general-mock')]").isNotEmpty())
                 .andExpect(content().string(not(containsString("\"apiKey\""))));
+    }
+
+    @Test
+    void persistsMessagesAndReusesConversationHistory() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/conversations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Java debugging\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Java debugging"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        JsonNode createdConversation = objectMapper.readTree(createResponse);
+        long conversationId = createdConversation.get("id").asLong();
+
+        mockMvc.perform(post("/api/agent/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"请帮我分析 Java 代码\",\"conversationId\":" + conversationId + "}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conversationId").value(conversationId));
+
+        mockMvc.perform(get("/api/conversations/{conversationId}/messages", conversationId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].role").value("user"))
+                .andExpect(jsonPath("$[1].role").value("assistant"))
+                .andExpect(jsonPath("$[1].route.modelId").value("coding-mock"));
     }
 }

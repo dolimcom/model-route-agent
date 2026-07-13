@@ -1,0 +1,31 @@
+model-route:
+  models:
+    - id: general-mock
+      display-name: General Mock Model
+      provider: mock
+      enabled: true
+      model-name: general-mock
+      supported-tasks:
+        - GENERAL
+        - DAILY
+    - id: literary-mock
+      display-name: Literary Mock Model
+      provider: mock
+      enabled: true
+      model-name: literary-mock
+      supported-tasks:
+        - LITERARY
+    - id: coding-mock
+      display-name: Coding Mock Model
+      provider: mock
+      enabled: true
+      model-name: coding-mock
+      supported-tasks:
+        - CODING
+    - id: math-mock
+      display-name: Math Mock Model
+      provider: mock
+      enabled: true
+      model-name: math-mock
+      supported-tasks:
+        - MATH

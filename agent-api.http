@@ -97,3 +97,37 @@ Content-Type: application/json
 {
   "question": "请用一句话介绍人工智能。"
 }
+
+### Day 6: create a conversation and store its id for following requests
+POST http://localhost:8080/api/conversations
+Content-Type: application/json
+
+{
+  "title": "Java debugging session"
+}
+
+> {% client.global.set("conversationId", response.body.id); %}
+
+### Day 6: send a message in the created conversation
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请帮我分析这段 Java 代码的 bug",
+  "conversationId": {{conversationId}}
+}
+
+### Day 6: inspect the stored user message, answer, and route metadata
+GET http://localhost:8080/api/conversations/{{conversationId}}/messages
+
+### Day 6: list all conversations ordered by latest activity
+GET http://localhost:8080/api/conversations
+
+### Day 6
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请用一句话总结上面的讨论。",
+  "conversationId": {{conversationId}}
+}

@@ -42,6 +42,6 @@ public class AgentController {
 
     @PostMapping("/chat")
     public ResponseEntity<AgentResponse> chat(@Valid @RequestBody AgentRequest request) {
-        return ResponseEntity.ok(agentService.chat(request.question()));
+        return ResponseEntity.ok(agentService.chat(request.question(), request.conversationId()));
     }
 }

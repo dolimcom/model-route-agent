@@ -6,6 +6,14 @@ spring:
       # Local provider profiles only. Do not load shared models.yml at runtime.
       - classpath:models_local.yml
       - optional:classpath:router.yml
+  datasource:
+    url: jdbc:mysql://localhost:3306/model_route_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: coder
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
 
 server:
   port: 8080
