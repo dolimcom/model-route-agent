@@ -38,7 +38,7 @@ public class ConversationController {
     }
 
     @GetMapping("/{conversationId}/messages")
-    public List<ConversationMessageResponse> listMessages(@PathVariable Long conversationId) {
+    public List<ConversationMessageResponse> listMessages(@PathVariable String conversationId) {
         return conversationService.listMessages(conversationId);
     }
 }

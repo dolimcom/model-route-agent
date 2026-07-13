@@ -34,7 +34,7 @@ public class MockAgentService {
         return chat(question, null);
     }
 
-    public AgentResponse chat(String question, Long conversationId) {
+    public AgentResponse chat(String question, String conversationId) {
         List<ChatMessage> messages = conversationId == null
                 ? new ArrayList<>()
                 : new ArrayList<>(conversationService.loadProviderHistory(conversationId));

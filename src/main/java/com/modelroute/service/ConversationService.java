@@ -24,18 +24,22 @@ public class ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final ConversationMessageRepository messageRepository;
+    private final ConversationIdGenerator conversationIdGenerator;
 
     public ConversationService(
             ConversationRepository conversationRepository,
-            ConversationMessageRepository messageRepository) {
+            ConversationMessageRepository messageRepository,
+            ConversationIdGenerator conversationIdGenerator) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
+        this.conversationIdGenerator = conversationIdGenerator;
     }
 
     @Transactional
     public ConversationResponse create(String requestedTitle) {
         String title = StringUtils.hasText(requestedTitle) ? requestedTitle.trim() : DEFAULT_TITLE;
-        Conversation savedConversation = conversationRepository.save(new Conversation(title));
+        Conversation savedConversation = conversationRepository.save(
+                new Conversation(conversationIdGenerator.nextId(), title));
         return toConversationResponse(savedConversation);
     }
 
@@ -47,32 +51,32 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ConversationMessageResponse> listMessages(Long conversationId) {
+    public List<ConversationMessageResponse> listMessages(String conversationId) {
         requireConversation(conversationId);
-        return messageRepository.findAllByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
+        return messageRepository.findAllByConversationConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
                 .map(this::toMessageResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<ChatMessage> loadProviderHistory(Long conversationId) {
+    public List<ChatMessage> loadProviderHistory(String conversationId) {
         requireConversation(conversationId);
-        return messageRepository.findAllByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
+        return messageRepository.findAllByConversationConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
                 .map(message -> new ChatMessage(message.getRole(), message.getContent()))
                 .toList();
     }
 
     @Transactional
-    public void recordUserMessage(Long conversationId, String content, RouteDecision routeDecision) {
+    public void recordUserMessage(String conversationId, String content, RouteDecision routeDecision) {
         recordMessage(conversationId, "user", content, routeDecision);
     }
 
     @Transactional
-    public void recordAssistantMessage(Long conversationId, String content, RouteDecision routeDecision) {
+    public void recordAssistantMessage(String conversationId, String content, RouteDecision routeDecision) {
         recordMessage(conversationId, "assistant", content, routeDecision);
     }
 
-    private void recordMessage(Long conversationId, String role, String content, RouteDecision routeDecision) {
+    private void recordMessage(String conversationId, String role, String content, RouteDecision routeDecision) {
         Conversation conversation = requireConversation(conversationId);
         messageRepository.save(new ConversationMessage(
                 conversation,
@@ -84,15 +88,15 @@ public class ConversationService {
         conversation.touch();
     }
 
-    private Conversation requireConversation(Long conversationId) {
-        return conversationRepository.findById(conversationId)
+    private Conversation requireConversation(String conversationId) {
+        return conversationRepository.findByConversationId(conversationId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Conversation not found: " + conversationId));
     }
 
     private ConversationResponse toConversationResponse(Conversation conversation) {
         return new ConversationResponse(
-                conversation.getId(),
+                conversation.getConversationId(),
                 conversation.getTitle(),
                 conversation.getCreatedAt(),
                 conversation.getUpdatedAt());

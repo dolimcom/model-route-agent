@@ -18,6 +18,9 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "conversation_id", nullable = false, unique = true, length = 48)
+    private String conversationId;
+
     @Column(nullable = false, length = 120)
     private String title;
 
@@ -32,7 +35,8 @@ public class Conversation {
     protected Conversation() {
     }
 
-    public Conversation(String title) {
+    public Conversation(String conversationId, String title) {
+        this.conversationId = conversationId;
         this.title = title;
     }
 
@@ -42,6 +46,10 @@ public class Conversation {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getConversationId() {
+        return conversationId;
     }
 
     public LocalDateTime getCreatedAt() {

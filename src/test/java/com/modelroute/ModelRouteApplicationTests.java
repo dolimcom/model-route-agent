@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -102,11 +103,12 @@ class ModelRouteApplicationTests {
                 .getResponse()
                 .getContentAsString();
         JsonNode createdConversation = objectMapper.readTree(createResponse);
-        long conversationId = createdConversation.get("id").asLong();
+        String conversationId = createdConversation.get("id").asText();
+        assertThat(conversationId).matches("\\d{8}-\\d{9}-\\d{10}");
 
         mockMvc.perform(post("/api/agent/chat")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"question\":\"请帮我分析 Java 代码\",\"conversationId\":" + conversationId + "}"))
+                        .content("{\"question\":\"请帮我分析 Java 代码\",\"conversationId\":\"" + conversationId + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.conversationId").value(conversationId));
 
