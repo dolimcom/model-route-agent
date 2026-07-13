@@ -1,16 +1,26 @@
 package com.modelroute;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.modelroute.provider.ModelProviderDispatcher;
+import com.modelroute.provider.ProviderResponse;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -18,6 +28,15 @@ class ModelRouteApplicationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ModelProviderDispatcher providerDispatcher;
+
+    @BeforeEach
+    void stubProviderDispatcher() {
+        given(providerDispatcher.complete(any(), any()))
+                .willReturn(new ProviderResponse("[Test provider response]"));
+    }
 
     @Test
     void healthEndpointReturnsUp() throws Exception {
@@ -63,7 +82,7 @@ class ModelRouteApplicationTests {
     void modelsEndpointReturnsConfiguredRegistry() throws Exception {
         mockMvc.perform(get("/api/agent/models"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("general-mock"))
-                .andExpect(jsonPath("$.length()").value(4));
+                .andExpect(jsonPath("$[?(@.id == 'general-mock')]").isNotEmpty())
+                .andExpect(content().string(not(containsString("\"apiKey\""))));
     }
 }

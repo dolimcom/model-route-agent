@@ -3,7 +3,8 @@ spring:
     name: model-route-agent
   config:
     import:
-      - optional:classpath:models.yml
+      # Local provider profiles only. Do not load shared models.yml at runtime.
+      - classpath:models_local.yml
       - optional:classpath:router.yml
 
 server:

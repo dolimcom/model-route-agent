@@ -3,21 +3,44 @@ model-route:
     - id: general-mock
       display-name: General Mock Model
       provider: mock
+      enabled: true
+      model-name: general-mock
       supported-tasks:
         - GENERAL
         - DAILY
     - id: literary-mock
       display-name: Literary Mock Model
       provider: mock
+      enabled: true
+      model-name: literary-mock
       supported-tasks:
         - LITERARY
     - id: coding-mock
       display-name: Coding Mock Model
       provider: mock
+      enabled: true
+      model-name: coding-mock
       supported-tasks:
         - CODING
     - id: math-mock
       display-name: Math Mock Model
       provider: mock
+      enabled: true
+      model-name: math-mock
       supported-tasks:
         - MATH
+
+    # Day 5 testing template. It remains disabled until a real provider client is implemented.
+    # Keep the API key in an environment variable or ignored local config, never in committed YAML.
+    - id: openai-compatible-test
+      display-name: OpenAI Compatible Test Model
+      provider: openai-compatible
+      enabled: false
+      base-url: https://api.example.com/v1
+      api-key: ${MODEL_ROUTE_API_KEY:}
+      model-name: replace-with-provider-model-name
+      timeout-ms: 15000
+      max-tokens: 1024
+      temperature: 0.7
+      supported-tasks:
+        - GENERAL

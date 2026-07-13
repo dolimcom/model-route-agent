@@ -31,6 +31,14 @@ Content-Type: application/json
 {
   "question": "请帮我润色明天的学习计划"
 }
+
+### Call the configured GENERAL provider (requires models_local.yml with a real enabled model)
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请用一句话介绍人工智能。"
+}
 ### Route a Java stack trace
 POST http://localhost:8080/api/agent/chat
 Content-Type: application/json
@@ -69,4 +77,23 @@ Content-Type: application/json
 
 {
   "question": "你好，请介绍一下你自己"
+}
+
+### Verify local model configuration
+GET http://localhost:8080/api/agent/models
+
+### Verify routing still uses configured mock model
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请帮我分析这段 Java 代码的 bug"
+}
+
+### Call real DeepSeek model through GENERAL routing
+POST http://localhost:8080/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "请用一句话介绍人工智能。"
 }

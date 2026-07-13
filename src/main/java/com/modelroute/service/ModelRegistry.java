@@ -50,11 +50,16 @@ public class ModelRegistry implements InitializingBean {
     }
 
     public ModelRouteProperties.ModelDefinition getFallbackModel() {
-        return getRequiredModel(properties.getRouter().getFallbackModelId());
+        ModelRouteProperties.ModelDefinition fallbackModel = getRequiredModel(properties.getRouter().getFallbackModelId());
+        if (!fallbackModel.isEnabled()) {
+            throw new IllegalStateException("Configured fallback model is disabled: " + fallbackModel.getId());
+        }
+        return fallbackModel;
     }
 
     public Optional<ModelRouteProperties.ModelDefinition> findFirstSupporting(TaskType taskType) {
         return modelsById.values().stream()
+                .filter(ModelRouteProperties.ModelDefinition::isEnabled)
                 .filter(model -> model.getSupportedTasks().contains(taskType))
                 .findFirst();
     }
@@ -84,6 +89,17 @@ public class ModelRegistry implements InitializingBean {
         }
         if (model.getSupportedTasks().stream().anyMatch(Objects::isNull)) {
             throw new IllegalStateException("Model supported-tasks must not contain null for " + model.getId());
+        }
+        if (model.isEnabled() && !"mock".equalsIgnoreCase(model.getProvider())) {
+            if (!StringUtils.hasText(model.getBaseUrl())) {
+                throw new IllegalStateException("Model base-url must not be blank for " + model.getId());
+            }
+            if (!StringUtils.hasText(model.getApiKey())) {
+                throw new IllegalStateException("Model api-key must not be blank for " + model.getId());
+            }
+            if (!StringUtils.hasText(model.getModelName())) {
+                throw new IllegalStateException("Model model-name must not be blank for " + model.getId());
+            }
         }
     }
 
