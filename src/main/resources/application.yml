@@ -17,3 +17,13 @@ spring:
 
 server:
   port: 8080
+
+model-route:
+  files:
+    # Override MODEL_ROUTE_WORKSPACE when the local workspace is elsewhere.
+    allowed-roots:
+      - id: agent-workspace
+        path: ${MODEL_ROUTE_WORKSPACE:D:/project/agent-workspace}
+        enabled: true
+    max-read-bytes: 1048576
+    max-write-bytes: 1048576

@@ -49,3 +49,4 @@ models_*.local.yml
 # Operating system files
 .DS_Store
 Thumbs.db
+/database/migrations/002_conversation_business_id.sql

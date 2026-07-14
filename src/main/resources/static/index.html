@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModelRoute Workspace</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="grain"></div>
+<header class="masthead">
+    <div>
+        <p class="eyebrow">MODELROUTE / LOCAL WORKSPACE</p>
+        <h1>Workspace Console</h1>
+    </div>
+    <div class="status-cluster">
+        <span class="pulse"></span>
+        <span id="statusText">正在连接本地服务</span>
+    </div>
+</header>
+
+<main class="workspace-shell">
+    <aside class="navigator panel">
+        <div class="panel-heading">
+            <div>
+                <span class="step">01</span>
+                <h2>文件导航</h2>
+            </div>
+            <button id="refreshButton" class="icon-button" type="button" title="刷新">↻</button>
+        </div>
+
+        <label class="field-label" for="rootSelect">允许根目录</label>
+        <select id="rootSelect"></select>
+
+        <label class="field-label" for="directoryPath">当前相对路径</label>
+        <div class="path-row">
+            <button id="upButton" class="icon-button" type="button" title="返回上级">←</button>
+            <input id="directoryPath" value="nested" placeholder="nested">
+            <button id="openDirectoryButton" class="small-button" type="button">打开</button>
+        </div>
+
+        <div id="entryList" class="entry-list" aria-live="polite"></div>
+
+        <button id="createDirectoryButton" class="outline-button full-width" type="button">
+            + 新建目录
+        </button>
+    </aside>
+
+    <section class="editor panel">
+        <div class="panel-heading">
+            <div>
+                <span class="step">02</span>
+                <h2>内容编辑器</h2>
+            </div>
+            <span id="byteCount" class="byte-count">0 B</span>
+        </div>
+
+        <label class="field-label" for="filePath">文件相对路径</label>
+        <input id="filePath" placeholder="nested/example.txt">
+
+        <label class="field-label" for="fileContent">UTF-8 文本内容</label>
+        <textarea id="fileContent" spellcheck="false" placeholder="选择文件，或输入新文件内容..."></textarea>
+
+        <div class="action-grid">
+            <button id="createFileButton" class="primary-button" type="button">创建文件</button>
+            <button id="saveFileButton" class="primary-button accent" type="button">保存修改</button>
+            <button id="renameButton" class="outline-button" type="button">重命名</button>
+            <button id="deleteButton" class="danger-button" type="button">删除</button>
+        </div>
+    </section>
+
+    <aside class="approval panel">
+        <div class="panel-heading">
+            <div>
+                <span class="step">03</span>
+                <h2>审批队列</h2>
+            </div>
+            <span class="coming-soon">DAY 9</span>
+        </div>
+        <p class="approval-copy">当前 Day 8 操作会直接执行。下一阶段将在这里展示修改差异、审批状态和回滚入口。</p>
+        <div class="preview-card">
+            <span>LAST OPERATION</span>
+            <strong id="lastOperation">尚无操作</strong>
+            <code id="lastOperationPath">—</code>
+        </div>
+    </aside>
+</main>
+
+<div id="toast" class="toast" role="status"></div>
+<script src="/app.js" defer></script>
+</body>
+</html>
