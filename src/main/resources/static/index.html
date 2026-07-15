@@ -75,9 +75,28 @@
                 <span class="step">03</span>
                 <h2>审批队列</h2>
             </div>
-            <span class="coming-soon">DAY 9</span>
+            <button id="refreshOperationsButton" class="icon-button" type="button" title="刷新审批队列">↻</button>
         </div>
-        <p class="approval-copy">当前 Day 8 操作会直接执行。下一阶段将在这里展示修改差异、审批状态和回滚入口。</p>
+
+        <label class="field-label" for="approvalMode">文件操作模式</label>
+        <select id="approvalMode">
+            <option value="MANUAL">手动审批</option>
+            <option value="FULL_ACCESS">全权访问</option>
+        </select>
+        <p id="approvalHint" class="approval-copy">操作会先进入待审批队列，批准后才会修改文件。</p>
+
+        <div class="queue-heading">
+            <span>待审批</span>
+            <strong id="pendingCount">0</strong>
+        </div>
+        <div id="pendingOperations" class="operation-list" aria-live="polite"></div>
+
+        <div class="queue-heading history-heading">
+            <span>最近记录</span>
+            <button id="rollbackLastButton" class="text-button" type="button">回滚最近操作</button>
+        </div>
+        <div id="recentOperations" class="operation-list compact" aria-live="polite"></div>
+
         <div class="preview-card">
             <span>LAST OPERATION</span>
             <strong id="lastOperation">尚无操作</strong>

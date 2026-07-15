@@ -293,6 +293,150 @@ button:active {
     line-height: 1.65;
 }
 
+.queue-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 22px 0 10px;
+    color: var(--forest);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.queue-heading strong {
+    display: grid;
+    min-width: 27px;
+    height: 27px;
+    padding: 0 7px;
+    place-items: center;
+    border-radius: 999px;
+    color: #fffdf6;
+    background: var(--ember);
+}
+
+.history-heading {
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.text-button {
+    padding: 0;
+    color: var(--ember);
+    background: transparent;
+    font-size: 0.76rem;
+}
+
+.operation-list {
+    display: grid;
+    gap: 10px;
+    max-height: 330px;
+    overflow: auto;
+}
+
+.operation-list.compact {
+    max-height: 260px;
+}
+
+.operation-card {
+    display: grid;
+    gap: 9px;
+    padding: 13px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 253, 247, 0.75);
+}
+
+.operation-card-header,
+.operation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.operation-card-header strong {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 0.72rem;
+}
+
+.operation-card code,
+.operation-card pre {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    color: var(--forest);
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 0.7rem;
+}
+
+.operation-card pre {
+    max-height: 92px;
+    margin: 0;
+    padding: 9px;
+    overflow: auto;
+    background: var(--paper-deep);
+}
+
+.status-badge {
+    padding: 4px 6px;
+    border-radius: 999px;
+    color: var(--muted);
+    background: var(--paper-deep);
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 0.62rem;
+    font-weight: 800;
+}
+
+.status-pending,
+.status-approved {
+    color: #8a4b27;
+    background: rgba(216, 109, 58, 0.15);
+}
+
+.status-executed {
+    color: var(--forest);
+    background: rgba(120, 144, 111, 0.2);
+}
+
+.status-failed,
+.status-rejected {
+    color: var(--danger);
+    background: rgba(164, 62, 52, 0.13);
+}
+
+.queue-button {
+    flex: 1;
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 0.72rem;
+}
+
+.queue-button.approve {
+    color: #fffdf6;
+    background: var(--forest);
+}
+
+.queue-button.reject {
+    color: var(--danger);
+    border: 1px solid rgba(164, 62, 52, 0.4);
+    background: transparent;
+}
+
+.operation-error {
+    margin: 0;
+    color: var(--danger);
+    font-size: 0.72rem;
+}
+
+.empty-state {
+    margin: 0;
+    padding: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    text-align: center;
+}
+
 .preview-card {
     display: grid;
     gap: 10px;

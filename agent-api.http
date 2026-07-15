@@ -51,6 +51,70 @@ Content-Type: application/json
   "conversationId": "{{dailyConversationId}}"
 }
 
+### Day 9: propose a manual file creation without changing the file yet
+POST http://localhost:8080/api/file-operations
+Content-Type: application/json
+
+{
+  "rootId": "agent-workspace",
+  "operationType": "CREATE_FILE",
+  "targetPath": "nested/day9-manual.txt",
+  "content": "This content must appear only after approval.",
+  "approvalMode": "MANUAL"
+}
+
+> {% client.global.set("manualFileOperationId", response.body.operationId); %}
+
+### Day 9: list pending operations and verify the proposal is awaiting approval
+GET http://localhost:8080/api/file-operations?status=PENDING
+
+### Day 9: approve the pending operation
+POST http://localhost:8080/api/file-operations/{{manualFileOperationId}}/approve
+
+### Day 9: verify that approval created the file
+GET http://localhost:8080/api/files/agent-workspace/content?path=nested/day9-manual.txt
+
+### Day 9: roll back the approved creation
+POST http://localhost:8080/api/file-operations/{{manualFileOperationId}}/rollback
+
+### Day 9: propose an operation that will be rejected
+POST http://localhost:8080/api/file-operations
+Content-Type: application/json
+
+{
+  "rootId": "agent-workspace",
+  "operationType": "CREATE_FILE",
+  "targetPath": "nested/day9-rejected.txt",
+  "content": "This file must never be created.",
+  "approvalMode": "MANUAL"
+}
+
+> {% client.global.set("rejectedFileOperationId", response.body.operationId); %}
+
+### Day 9: reject the operation without touching the file system
+POST http://localhost:8080/api/file-operations/{{rejectedFileOperationId}}/reject
+
+### Day 9: full-access mode approves and executes immediately
+POST http://localhost:8080/api/file-operations
+Content-Type: application/json
+
+{
+  "rootId": "agent-workspace",
+  "operationType": "CREATE_FILE",
+  "targetPath": "nested/day9-full-access.txt",
+  "content": "Full access executes this proposal immediately.",
+  "approvalMode": "FULL_ACCESS"
+}
+
+### Day 9: verify the full-access file exists
+GET http://localhost:8080/api/files/agent-workspace/content?path=nested/day9-full-access.txt
+
+### Day 9: roll back the most recently executed operation
+POST http://localhost:8080/api/file-operations/rollback-last
+
+### Day 9: inspect the latest audit records and statuses
+GET http://localhost:8080/api/file-operations
+
 ### Day 8: create a temporary test directory
 POST http://localhost:8080/api/files/agent-workspace/directories
 Content-Type: application/json

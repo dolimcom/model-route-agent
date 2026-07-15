@@ -94,6 +94,15 @@ public class FileAccessService {
         }
     }
 
+    public FileSnapshot snapshot(String rootId, String relativePath) {
+        Path target = resolveExistingPath(rootId, relativePath);
+        if (Files.isDirectory(target)) {
+            return new FileSnapshot(true, null);
+        }
+        FileContentResponse content = read(rootId, relativePath);
+        return new FileSnapshot(false, content.content());
+    }
+
     public FileOperationResponse createDirectory(String rootId, String relativePath) {
         Path directory = resolveNewPath(rootId, relativePath);
         try {

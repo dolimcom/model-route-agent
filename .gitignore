@@ -50,3 +50,4 @@ models_*.local.yml
 .DS_Store
 Thumbs.db
 /database/migrations/002_conversation_business_id.sql
+/database/migrations/003_file_operation.sql
