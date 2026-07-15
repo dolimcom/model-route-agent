@@ -1,232 +1,83 @@
-### Day 6: create a coding conversation and store its id for following requests
-POST http://localhost:8080/api/conversations
+@baseUrl = http://localhost:8080
+
+### Coding model: create an isolated conversation
+POST {{baseUrl}}/api/conversations
 Content-Type: application/json
 
 {
-  "title": "Java debugging session"
+  "title": "Real coding model verification"
 }
 
 > {% client.global.set("codingConversationId", response.body.id); %}
 
-### Day 6: send a message in the created conversation
-POST http://localhost:8080/api/agent/chat
+### Coding model: verify routing and real provider response
+# Expected: HTTP 200, route.taskType=CODING, route.modelId=coding, no [Mock response]
+POST {{baseUrl}}/api/agent/chat
 Content-Type: application/json
 
 {
-  "question": "请帮我分析这段 Java 代码的 bug",
+  "question": "请用两句话分析下面 Java 代码的 bug，并给出最小修复方案：String text = null; System.out.println(text.length());",
   "conversationId": "{{codingConversationId}}"
 }
 
-### Day 6: inspect the stored user message, answer, and route metadata
-GET http://localhost:8080/api/conversations/{{codingConversationId}}/messages
+### Coding model: verify the user message and assistant answer were persisted
+# Expected: two messages; assistant.modelId=coding
+GET {{baseUrl}}/api/conversations/{{codingConversationId}}/messages
 
-### Day 6: list all conversations ordered by latest activity
-GET http://localhost:8080/api/conversations
-
-### Day 6: create an isolated daily-planning conversation
-POST http://localhost:8080/api/conversations
+### Day 10: create a conversation for the natural-language file agent
+POST {{baseUrl}}/api/conversations
 Content-Type: application/json
 
 {
-  "title": "Daily planning test"
+  "title": "Day 10 natural-language file operation"
 }
 
-> {% client.global.set("dailyConversationId", response.body.id); %}
+> {% client.global.set("day10ConversationId", response.body.id); %}
 
-### Day 6: first daily request, constrained to one sentence
-POST http://localhost:8080/api/agent/chat
+### Day 10: inspect and remember the original test file
+# Expected original content:
+# Day 10 original content.
+# This file has not been modified by the agent.
+GET {{baseUrl}}/api/files/agent-workspace/content?path=nested/day10-agent.txt
+
+### Day 10: ask the model to generate a manual file-operation proposal
+# Expected: HTTP 201, operationType=UPDATE_FILE, status=PENDING
+POST {{baseUrl}}/api/agent/file-operations
 Content-Type: application/json
 
 {
-  "question": "请用一句话为我制定明天上午的学习计划。",
-  "conversationId": "{{dailyConversationId}}"
-}
-
-### Day 6: follow up in the same conversation, also constrained to one sentence
-POST http://localhost:8080/api/agent/chat
-Content-Type: application/json
-
-{
-  "question": "请用一句话总结上面的讨论。",
-  "conversationId": "{{dailyConversationId}}"
-}
-
-### Day 9: propose a manual file creation without changing the file yet
-POST http://localhost:8080/api/file-operations
-Content-Type: application/json
-
-{
+  "instruction": "将当前文件改为两行：第一行写 Day 10 agent update completed.，第二行写 This change requires approval.；不要添加其他内容。",
+  "conversationId": "{{day10ConversationId}}",
   "rootId": "agent-workspace",
-  "operationType": "CREATE_FILE",
-  "targetPath": "nested/day9-manual.txt",
-  "content": "This content must appear only after approval.",
+  "selectedPath": "nested/day10-agent.txt",
   "approvalMode": "MANUAL"
 }
 
-> {% client.global.set("manualFileOperationId", response.body.operationId); %}
+> {% client.global.set("day10OperationId", response.body.operation.operationId); %}
 
-### Day 9: list pending operations and verify the proposal is awaiting approval
-GET http://localhost:8080/api/file-operations?status=PENDING
+### Day 10: verify the proposal is waiting for approval
+# Expected: the response contains day10OperationId and status=PENDING
+GET {{baseUrl}}/api/file-operations?status=PENDING
 
-### Day 9: approve the pending operation
-POST http://localhost:8080/api/file-operations/{{manualFileOperationId}}/approve
+### Day 10: verify manual mode has not modified the file
+# Expected: content is still the original two lines
+GET {{baseUrl}}/api/files/agent-workspace/content?path=nested/day10-agent.txt
 
-### Day 9: verify that approval created the file
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/day9-manual.txt
+### Day 10: approve and execute the model-generated operation
+# Expected: status=EXECUTED and approvedAt/executedAt are not null
+POST {{baseUrl}}/api/file-operations/{{day10OperationId}}/approve
 
-### Day 9: roll back the approved creation
-POST http://localhost:8080/api/file-operations/{{manualFileOperationId}}/rollback
+### Day 10: verify the approved content
+# Expected exactly two lines requested above
+GET {{baseUrl}}/api/files/agent-workspace/content?path=nested/day10-agent.txt
 
-### Day 9: propose an operation that will be rejected
-POST http://localhost:8080/api/file-operations
-Content-Type: application/json
+### Day 10: verify conversation history and model routing metadata
+# Expected: two messages and the operation response used this conversationId
+GET {{baseUrl}}/api/conversations/{{day10ConversationId}}/messages
 
-{
-  "rootId": "agent-workspace",
-  "operationType": "CREATE_FILE",
-  "targetPath": "nested/day9-rejected.txt",
-  "content": "This file must never be created.",
-  "approvalMode": "MANUAL"
-}
+### Day 10: roll back the model-generated update
+# Expected: status=ROLLED_BACK and rolledBackAt is not null
+POST {{baseUrl}}/api/file-operations/{{day10OperationId}}/rollback
 
-> {% client.global.set("rejectedFileOperationId", response.body.operationId); %}
-
-### Day 9: reject the operation without touching the file system
-POST http://localhost:8080/api/file-operations/{{rejectedFileOperationId}}/reject
-
-### Day 9: full-access mode approves and executes immediately
-POST http://localhost:8080/api/file-operations
-Content-Type: application/json
-
-{
-  "rootId": "agent-workspace",
-  "operationType": "CREATE_FILE",
-  "targetPath": "nested/day9-full-access.txt",
-  "content": "Full access executes this proposal immediately.",
-  "approvalMode": "FULL_ACCESS"
-}
-
-### Day 9: verify the full-access file exists
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/day9-full-access.txt
-
-### Day 9: roll back the most recently executed operation
-POST http://localhost:8080/api/file-operations/rollback-last
-
-### Day 9: inspect the latest audit records and statuses
-GET http://localhost:8080/api/file-operations
-
-### Day 8: create a temporary test directory
-POST http://localhost:8080/api/files/agent-workspace/directories
-Content-Type: application/json
-
-{
-  "path": "nested/day8-test"
-}
-
-### Day 8: create a text file without overwriting existing files
-POST http://localhost:8080/api/files/agent-workspace/files
-Content-Type: application/json
-
-{
-  "path": "nested/day8-test/draft.txt",
-  "content": "Day 8 first version"
-}
-
-### Day 8: update the text file using atomic replacement
-PUT http://localhost:8080/api/files/agent-workspace/content
-Content-Type: application/json
-
-{
-  "path": "nested/day8-test/draft.txt",
-  "content": "Day 8 updated version"
-}
-
-### Day 8: rename the updated file
-POST http://localhost:8080/api/files/agent-workspace/rename
-Content-Type: application/json
-
-{
-  "sourcePath": "nested/day8-test/draft.txt",
-  "targetPath": "nested/day8-test/final.txt"
-}
-
-### Day 8: verify the renamed file content
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/day8-test/final.txt
-
-### Day 8: list the temporary directory
-GET http://localhost:8080/api/files/agent-workspace/entries?path=nested/day8-test
-
-### Day 8: delete the test file
-DELETE http://localhost:8080/api/files/agent-workspace?path=nested/day8-test/final.txt
-
-### Day 8: delete the now-empty test directory
-DELETE http://localhost:8080/api/files/agent-workspace?path=nested/day8-test
-
-### Day 8: write traversal must be rejected with 403
-POST http://localhost:8080/api/files/agent-workspace/files
-Content-Type: application/json
-
-{
-  "path": "../blocked.txt",
-  "content": "This file must never be created"
-}
-
-### Day 7: create an isolated conversation for real Demo.java analysis
-POST http://localhost:8080/api/conversations
-Content-Type: application/json
-
-{
-  "title": "Real Demo.java analysis"
-}
-
-> {% client.global.set("demoAnalysisConversationId", response.body.id); %}
-
-### Day 7: read Demo.java and build the model request dynamically
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/Demo.java
-
-> {%
-    client.global.set("demoAnalysisRequest", JSON.stringify({
-        question: "请分析下面的 Java 源代码，指出导致运行时异常的代码行、异常原因和最小修复方案；请控制在三句话内。\n\n" + response.body.content,
-        conversationId: client.global.get("demoAnalysisConversationId")
-    }));
-%}
-
-### Day 7: send the loaded Demo.java to the configured real coding model
-POST http://localhost:8080/api/agent/chat
-Content-Type: application/json
-
-{{demoAnalysisRequest}}
-
-### Day 7: verify that the file-analysis conversation stores the request and answer
-GET http://localhost:8080/api/conversations/{{demoAnalysisConversationId}}/messages
-
-### Day 6: verify that the daily conversation contains four messages
-GET http://localhost:8080/api/conversations/{{dailyConversationId}}/messages
-
-### Day 7: list configured file roots
-GET http://localhost:8080/api/files/roots
-
-### Day 7: list files in the nested workspace
-GET http://localhost:8080/api/files/agent-workspace/entries?path=nested
-
-### Day 7: read the nested Markdown test file
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/todo.md
-
-### Day 7: read the nested text test file
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/notes.txt
-
-### Day 7: read the nested Java test file
-GET http://localhost:8080/api/files/agent-workspace/content?path=nested/Demo.java
-
-### Day 7: path traversal must be rejected with 403
-GET http://localhost:8080/api/files/agent-workspace/content?path=../model-route-agent/pom.xml
-
-
-### Day 6: summarize the coding conversation with the configured general model
-POST http://localhost:8080/api/agent/chat
-Content-Type: application/json
-
-{
-  "question": "请用一句话总结上面的讨论。",
-  "conversationId": "{{dailyConversationId}}"
-}
+### Day 10: verify rollback restored the original content
+GET {{baseUrl}}/api/files/agent-workspace/content?path=nested/day10-agent.txt

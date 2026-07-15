@@ -12,6 +12,8 @@ const elements = {
     filePath: document.querySelector("#filePath"),
     fileContent: document.querySelector("#fileContent"),
     byteCount: document.querySelector("#byteCount"),
+    agentInstruction: document.querySelector("#agentInstruction"),
+    agentAnswer: document.querySelector("#agentAnswer"),
     approvalMode: document.querySelector("#approvalMode"),
     approvalHint: document.querySelector("#approvalHint"),
     pendingCount: document.querySelector("#pendingCount"),
@@ -154,6 +156,32 @@ async function submitOperation(operation) {
         showToast(result.errorMessage || `操作状态：${result.status}`, result.status === "FAILED");
     }
     return result;
+}
+
+async function planFileOperation() {
+    const instruction = elements.agentInstruction.value.trim();
+    if (!instruction) throw new Error("请先输入文件操作指令");
+
+    const result = await request("/api/agent/file-operations", {
+        method: "POST",
+        body: JSON.stringify({
+            instruction,
+            rootId: state.rootId,
+            selectedPath: state.selectedPath,
+            approvalMode: elements.approvalMode.value,
+        }),
+    });
+
+    elements.agentAnswer.textContent = `${result.answer} · ${result.route.taskType} / ${result.route.modelId}`;
+    recordOperation(result.operation);
+    await loadOperations();
+    if (result.operation.status === "EXECUTED") {
+        await loadEntries();
+        if (state.selectedPath) await openFile(state.selectedPath);
+        showToast(`Agent 操作已执行：${operationPath(result.operation)}`);
+    } else {
+        showToast(`Agent 提案等待审批：${operationPath(result.operation)}`);
+    }
 }
 
 async function createDirectory() {
@@ -331,6 +359,7 @@ document.querySelector("#refreshOperationsButton").addEventListener("click", gua
 document.querySelector("#openDirectoryButton").addEventListener("click", guarded(loadEntries));
 document.querySelector("#upButton").addEventListener("click", guarded(() => openDirectory(parentPath(state.currentDirectory))));
 document.querySelector("#createDirectoryButton").addEventListener("click", guarded(createDirectory));
+document.querySelector("#planFileOperationButton").addEventListener("click", guarded(planFileOperation));
 document.querySelector("#createFileButton").addEventListener("click", guarded(createFile));
 document.querySelector("#saveFileButton").addEventListener("click", guarded(saveFile));
 document.querySelector("#renameButton").addEventListener("click", guarded(renamePath));

@@ -1,6 +1,6 @@
 model-route:
   router:
-    fallback-model-id: general
+    fallback-model-id: general-mock
     scoring:
       keyword-weight: 2
       code-syntax-weight: 1

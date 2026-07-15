@@ -283,6 +283,38 @@ button:active {
     margin-top: 14px;
 }
 
+.agent-command-card {
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 1px solid rgba(36, 79, 63, 0.25);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(36, 79, 63, 0.09), rgba(216, 109, 58, 0.08));
+}
+
+.agent-command-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--ember);
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+textarea.agent-instruction {
+    min-height: 94px;
+    font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+    line-height: 1.5;
+}
+
+.agent-answer {
+    margin: 12px 0 0;
+    color: var(--forest);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
 .coming-soon {
     padding: 5px 7px;
     border: 1px solid rgba(216, 109, 58, 0.35);

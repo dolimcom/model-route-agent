@@ -55,6 +55,20 @@
             <span id="byteCount" class="byte-count">0 B</span>
         </div>
 
+        <div class="agent-command-card">
+            <div class="agent-command-heading">
+                <span>AGENT FILE COMMAND</span>
+                <span>DAY 10</span>
+            </div>
+            <label class="field-label" for="agentInstruction">用自然语言描述文件操作</label>
+            <textarea id="agentInstruction" class="agent-instruction" spellcheck="false"
+                      placeholder="例如：把当前文件改成两行，并在第二行注明由 Agent 更新。"></textarea>
+            <button id="planFileOperationButton" class="primary-button full-width" type="button">
+                生成操作提案
+            </button>
+            <p id="agentAnswer" class="agent-answer">选择文件后输入指令，模型生成的操作仍受右侧审批模式控制。</p>
+        </div>
+
         <label class="field-label" for="filePath">文件相对路径</label>
         <input id="filePath" placeholder="nested/example.txt">
 
