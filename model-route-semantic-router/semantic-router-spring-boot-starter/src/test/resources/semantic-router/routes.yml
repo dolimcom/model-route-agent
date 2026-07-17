@@ -1,0 +1,16 @@
+configVersion: test-v1
+datasetVersion: test-dataset
+encoderVersion: stub
+policy:
+  minScore: 0.20
+  outOfDomainThreshold: 0.05
+  minMargin: 0.01
+routes:
+  - routeId: coding
+    target: gpt
+    utterances:
+      - 写代码
+  - routeId: general
+    target: gpt
+    utterances:
+      - 帮忙

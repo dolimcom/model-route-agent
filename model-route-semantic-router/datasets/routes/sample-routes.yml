@@ -1,0 +1,63 @@
+configVersion: sample-routes-v1
+datasetVersion: routes-2026-07-16
+encoderVersion: bge-m3
+policy:
+  minScore: 0.56
+  outOfDomainThreshold: 0.36
+  minMargin: 0.08
+  tieTolerance: 0.01
+  semanticWeight: 0.88
+  keywordWeight: 0.12
+  softHintBoost: 0.10
+  topCandidates: 3
+  fallback:
+    emptyInput: REJECT
+    lowConfidence: LAST_KNOWN_GOOD
+    ambiguous: REJECT
+    outOfDomain: REJECT
+    encoderError: LAST_KNOWN_GOOD
+    tie: REJECT
+    defaultRouteId: general
+  overrides:
+    - matchMode: CONTAINS
+      pattern: "退款"
+      routeId: billing
+routes:
+  - routeId: coding
+    target: gpt-4o-mini
+    description: coding and debugging tasks
+    keywords: [代码, bug, 调试, java, spring, test]
+    aggregationMode: TOP_K_MEAN
+    topK: 3
+    utterances:
+      - 帮我写一个 Java 单元测试
+      - 这个 Spring Boot 接口为什么 500
+      - 帮我排查代码中的空指针
+  - routeId: writing
+    target: qwen-long
+    description: long-form writing and summarization
+    keywords: [总结, 写作, 改写, 报告, 文档]
+    aggregationMode: TOP_K_MEAN
+    topK: 3
+    utterances:
+      - 帮我整理一份技术方案总结
+      - 把这段内容改写得更正式
+      - 帮我生成一份周报
+  - routeId: billing
+    target: support-flow
+    description: refunds and billing problems
+    keywords: [退款, 账单, 支付, 发票]
+    aggregationMode: MAX
+    utterances:
+      - 我想申请退款
+      - 账单扣费不对
+      - 支付之后没有开票
+  - routeId: general
+    target: gpt-4o-mini
+    description: general fallback route
+    keywords: [帮助, 咨询]
+    aggregationMode: CENTROID
+    utterances:
+      - 帮我看一下这个问题
+      - 给我一个建议
+      - 我有个问题想咨询

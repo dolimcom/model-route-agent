@@ -1,0 +1,6 @@
+{"input":"帮我写一个 Spring Boot 集成测试","expectedRouteId":"coding","expectedFallback":false}
+{"input":"这个账单重复扣费了，想退款","expectedRouteId":"billing","expectedFallback":false}
+{"input":"把这段项目经历改写成简历语言","expectedRouteId":"writing","expectedFallback":false}
+{"input":"你好","expectedRouteId":"general","expectedFallback":false}
+{"input":"今天上海天气怎么样","expectedRouteId":"general","expectedFallback":true}
+{"input":"", "expectedRouteId":"general","expectedFallback":true}
