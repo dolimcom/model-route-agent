@@ -1,0 +1,17 @@
+models:
+  - { family: OpenAI, label: GPT 5.3, modelName: gpt-5.3, provider: openai-responses, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI, label: GPT 5.3 Codex Spark, modelName: gpt-5.3-codex-spark, provider: openai-responses, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI, label: GPT 5.4, modelName: gpt-5.4, provider: openai-responses, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI, label: GPT 5.4 Mini, modelName: gpt-5.4-mini, provider: openai-responses, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI compatible, label: GPT 5.5, modelName: gpt-5.5, provider: openai-compatible, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI compatible, label: GPT 5.6 Luna, modelName: gpt-5.6-luna, provider: openai-compatible, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI compatible, label: GPT 5.6 Sol, modelName: gpt-5.6-sol, provider: openai-compatible, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: OpenAI compatible, label: GPT 5.6 Terra, modelName: gpt-5.6-terra, provider: openai-compatible, defaultBaseUrl: "https://api.openai.com/v1" }
+  - { family: Google, label: Gemini 2.5 Pro, modelName: gemini-2.5-pro, provider: gemini, defaultBaseUrl: "https://generativelanguage.googleapis.com" }
+  - { family: Google, label: Gemini 2.5 Flash, modelName: gemini-2.5-flash, provider: gemini, defaultBaseUrl: "https://generativelanguage.googleapis.com" }
+  - { family: Google, label: Gemini 2.5 Flash Lite, modelName: gemini-2.5-flash-lite, provider: gemini, defaultBaseUrl: "https://generativelanguage.googleapis.com" }
+  - { family: Anthropic, label: Claude Sonnet 4.5, modelName: claude-sonnet-4-5, provider: anthropic, defaultBaseUrl: "https://api.anthropic.com" }
+  - { family: Anthropic, label: Claude Opus 4.6, modelName: claude-opus-4-6, provider: anthropic, defaultBaseUrl: "https://api.anthropic.com" }
+  - { family: DeepSeek, label: DeepSeek Chat, modelName: deepseek-chat, provider: openai-compatible, defaultBaseUrl: "https://api.deepseek.com" }
+  - { family: DeepSeek, label: DeepSeek Reasoner, modelName: deepseek-reasoner, provider: openai-compatible, defaultBaseUrl: "https://api.deepseek.com" }
+  - { family: Local, label: Ollama custom model, modelName: ollama/custom, provider: ollama, defaultBaseUrl: "http://127.0.0.1:11434" }

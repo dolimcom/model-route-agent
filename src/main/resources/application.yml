@@ -1,29 +1,63 @@
 spring:
   application:
     name: model-route-agent
+  main:
+    # Required by the local Swing directory chooser used by POST /api/workspaces/pick.
+    headless: false
   config:
     import:
-      # Local provider profiles only. Do not load shared models.yml at runtime.
-      - classpath:models_local.yml
+      # Safe defaults. User-provided settings are persisted to the ignored runtime file below.
+      - classpath:models.yml
       - optional:classpath:router.yml
   datasource:
-    url: jdbc:mysql://localhost:3306/model_route_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: coder
-    password: ""
+    url: ${DB_URL:jdbc:mysql://localhost:3306/model_route_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:coder}
+    password: ${DB_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,semanticrouter
+
+semantic:
+  router:
+    enabled: true
+    routes-location: classpath:semantic-router/routes.yml
+    # The first local embedding request may need to cold-start the model.
+    read-timeout: 60s
+    local-model:
+      provider: OLLAMA
+      base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
+      model: ${EMBEDDING_MODEL:bge-m3:latest}
 
 model-route:
+  runtime:
+    enabled: true
+    models-file: ./config/models.local.yml
+    workspaces-file: ./config/workspaces.local.yml
+    chooser-state-file: ./config/chooser-state.local.yml
+    max-attachment-bytes: 1048576
   files:
-    # Override MODEL_ROUTE_WORKSPACE when the local workspace is elsewhere.
-    allowed-roots:
-      - id: agent-workspace
-        path: ${MODEL_ROUTE_WORKSPACE:D:/project/agent-workspace}
-        enabled: true
+    # Workspaces start empty and are added explicitly from the local UI.
+    allowed-roots: []
     max-read-bytes: 1048576
     max-write-bytes: 1048576
+
+logging:
+  file:
+    name: ./logs/model-route-agent.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-system}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-system}] %logger{36} - %msg%n"

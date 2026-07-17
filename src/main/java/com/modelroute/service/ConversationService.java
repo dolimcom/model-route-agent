@@ -1,5 +1,6 @@
 package com.modelroute.service;
 
+import com.modelroute.domain.TaskType;
 import com.modelroute.dto.ConversationMessageResponse;
 import com.modelroute.dto.ConversationResponse;
 import com.modelroute.dto.RouteDecision;
@@ -11,6 +12,7 @@ import com.modelroute.provider.ChatMessage;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,14 @@ public class ConversationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Optional<TaskType> findLastTaskType(String conversationId) {
+        requireConversation(conversationId);
+        return messageRepository
+                .findFirstByConversationConversationIdAndTaskTypeIsNotNullOrderByCreatedAtDescIdDesc(conversationId)
+                .map(ConversationMessage::getTaskType);
+    }
+
     @Transactional
     public void recordUserMessage(String conversationId, String content, RouteDecision routeDecision) {
         recordMessage(conversationId, "user", content, routeDecision);
@@ -74,6 +84,16 @@ public class ConversationService {
     @Transactional
     public void recordAssistantMessage(String conversationId, String content, RouteDecision routeDecision) {
         recordMessage(conversationId, "assistant", content, routeDecision);
+    }
+
+    @Transactional
+    public void recordExchange(
+            String conversationId,
+            String userContent,
+            String assistantContent,
+            RouteDecision routeDecision) {
+        recordMessage(conversationId, "user", userContent, routeDecision);
+        recordMessage(conversationId, "assistant", assistantContent, routeDecision);
     }
 
     private void recordMessage(String conversationId, String role, String content, RouteDecision routeDecision) {

@@ -7,6 +7,93 @@ model-route:
       strong-signal-weight: 4
       minimum-score: 2
       minimum-score-gap: 1
+    context:
+      enabled: true
+      followup-route-id: followup
+      general-route-id: general
+      minimum-followup-score: 0.50
+      maximum-general-score-gap: 0.12
+      maximum-specialist-score-gap: 0.02
+    # Maps generic semantic route IDs to agent business tasks and provider models.
+    # Route IDs and model IDs no longer need to share the same name.
+    semantic-mappings:
+      general:
+        task-type: GENERAL
+        model-id: general
+      daily:
+        task-type: DAILY
+        model-id: daily
+      literary:
+        task-type: LITERARY
+        model-id: literary
+      coding:
+        task-type: CODING
+        model-id: coding
+      math:
+        task-type: MATH
+        model-id: math
+    # Discourse markers are data, not Java rules; extend these lists for new phrasing.
+    focus:
+      enabled: true
+      minimum-focused-length: 2
+      switch-markers:
+        - 现在换个
+        - 现在换一个
+        - 换个话题
+        - 换一个话题
+        - 换个任务
+        - 换一个任务
+        - 不继续
+        - 不再
+        - 不需要
+        - 不是要
+        - 不要
+        - 先不讨论
+        - 先不谈
+        - 先放在一边
+        - 先不用
+      focus-markers:
+        - 而是
+        - 只需要
+        - 只想
+        - 任务是
+        - 实际要做的是
+        - 真正的问题是
+      trailing-constraints:
+        - "，不要"
+        - "，不需要"
+        - "，无需"
+        - "，不用"
+        - "，请勿"
+        - ";不要"
+        - ";不需要"
+        - "；不要"
+        - "；不需要"
+        - ",不要"
+        - ",不需要"
+        - ",不用"
+      acknowledgements:
+        - "好的，"
+        - "好，"
+        - "明白了，"
+        - "明白，"
+        - "行，"
+        - "那么，"
+      request-markers:
+        - 请
+      ignored-request-prefixes:
+        - 请勿
+        - 请不要
+      boundary-delimiters:
+        - "，"
+        - ","
+        - "："
+        - ":"
+        - "；"
+        - ";"
+        - "。"
+        - "！"
+        - "？"
     keywords:
       DAILY:
         - 计划

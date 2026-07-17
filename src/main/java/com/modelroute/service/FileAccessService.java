@@ -20,8 +20,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,18 +28,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class FileAccessService {
 
-    private final Map<String, AllowedRoot> rootsById;
+    private final WorkspaceRegistry workspaceRegistry;
     private final long maxReadBytes;
     private final long maxWriteBytes;
 
-    public FileAccessService(FileAccessProperties properties) {
-        this.rootsById = properties.getAllowedRoots().stream()
-                .collect(java.util.stream.Collectors.toUnmodifiableMap(
-                        AllowedRoot::getId,
-                        Function.identity(),
-                        (first, second) -> {
-                            throw new IllegalStateException("Duplicate file root id: " + first.getId());
-                        }));
+    public FileAccessService(FileAccessProperties properties, WorkspaceRegistry workspaceRegistry) {
+        this.workspaceRegistry = workspaceRegistry;
         this.maxReadBytes = properties.getMaxReadBytes();
         this.maxWriteBytes = properties.getMaxWriteBytes();
         if (maxReadBytes < 1) {
@@ -53,13 +45,13 @@ public class FileAccessService {
     }
 
     public List<FileRootResponse> listRoots() {
-        return rootsById.values().stream()
-                .map(root -> new FileRootResponse(root.getId(), root.isEnabled()))
-                .sorted(Comparator.comparing(FileRootResponse::id))
-                .toList();
+        return workspaceRegistry.list();
     }
 
     public List<FileEntryResponse> list(String rootId, String relativePath) {
+        if (workspaceRegistry.isSingleFileRoot(rootId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Directory listing is disabled for a selected file");
+        }
         Path directory = resolveExistingPath(rootId, relativePath);
         if (!Files.isDirectory(directory)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Path is not a directory");
@@ -213,6 +205,7 @@ public class FileAccessService {
         if (!candidate.startsWith(root)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Path is outside the allowed root");
         }
+        workspaceRegistry.assertPathAllowed(rootId, candidate);
         if (!Files.exists(candidate, LinkOption.NOFOLLOW_LINKS)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File or directory not found");
         }
@@ -222,6 +215,7 @@ public class FileAccessService {
             if (!realCandidate.startsWith(root)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Path is outside the allowed root");
             }
+            workspaceRegistry.assertPathAllowed(rootId, realCandidate);
             return realCandidate;
         } catch (IOException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to resolve file path", exception);
@@ -238,6 +232,7 @@ public class FileAccessService {
         if (!candidate.startsWith(root) || candidate.equals(root)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Path is outside the allowed root");
         }
+        workspaceRegistry.assertPathAllowed(rootId, candidate);
         if (Files.exists(candidate, LinkOption.NOFOLLOW_LINKS)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Target path already exists");
         }
@@ -259,11 +254,7 @@ public class FileAccessService {
     }
 
     private AllowedRoot root(String rootId) {
-        AllowedRoot root = rootsById.get(rootId);
-        if (root == null || !root.isEnabled()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File root not found: " + rootId);
-        }
-        return root;
+        return workspaceRegistry.required(rootId);
     }
 
     private Path configuredRootPath(AllowedRoot root) {

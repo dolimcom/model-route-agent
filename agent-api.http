@@ -1,5 +1,43 @@
 @baseUrl = http://localhost:8080
 
+### Final UI backend: health
+GET {{baseUrl}}/api/agent/health
+
+### Final UI backend: POST SSE chat
+# IntelliJ displays each named SSE event as it arrives.
+POST {{baseUrl}}/api/agent/stream
+Accept: text/event-stream
+Content-Type: application/json
+
+{
+  "question": "请用一句话解释什么是语义路由。",
+  "conversationId": null,
+  "rootId": "agent-workspace",
+  "selectedPath": null,
+  "attachmentId": null,
+  "approvalMode": "MANUAL"
+}
+
+### Final UI backend: sanitized runtime model settings
+GET {{baseUrl}}/api/settings/models
+
+### Final UI backend: model dropdown catalog
+GET {{baseUrl}}/api/settings/models/catalog
+
+### Final UI backend: registered workspaces
+GET {{baseUrl}}/api/workspaces
+
+### Final UI backend: upload one supported UTF-8 text attachment
+POST {{baseUrl}}/api/attachments
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="notes.txt"
+Content-Type: text/plain
+
+Attachment context smoke test.
+--WebAppBoundary--
+
 ### Coding model: create an isolated conversation
 POST {{baseUrl}}/api/conversations
 Content-Type: application/json
@@ -81,3 +119,123 @@ POST {{baseUrl}}/api/file-operations/{{day10OperationId}}/rollback
 
 ### Day 10: verify rollback restored the original content
 GET {{baseUrl}}/api/files/agent-workspace/content?path=nested/day10-agent.txt
+
+### Day 11: semantic coding route without configured rule keywords
+# Expected: route.taskType=CODING, route.modelId=coding, reason starts with "Semantic router selected"
+POST {{baseUrl}}/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "一个后端服务启动后立即退出，并且没有明显报错，我应该从哪些方向定位？"
+}
+
+### Day 11: semantic literary route without configured rule keywords
+# Expected: route.taskType=LITERARY, route.modelId=literary
+POST {{baseUrl}}/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "把这句话改得更有画面感，但不要改变含义：雨停后街道变得很安静。"
+}
+
+### Day 11: semantic math route without configured rule keywords
+# Expected: route.taskType=MATH, route.modelId=math
+POST {{baseUrl}}/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "连续抛三次硬币，恰好两次正面朝上的可能性是多少？请写出推导过程。"
+}
+
+### Day 11: verify semantic-router actuator snapshot
+# Expected: configVersion=agent-routes-v7, routeCount=6, routeIds contains followup
+GET {{baseUrl}}/actuator/semanticrouter
+
+### Context routing: create a conversation
+POST {{baseUrl}}/api/conversations
+Content-Type: application/json
+
+{
+  "title": "Context-aware routing verification"
+}
+
+> {% client.global.set("contextConversationId", response.body.id); %}
+
+### Context routing: establish CODING as the previous task
+# This request calls the configured coding model once and persists the route.
+POST {{baseUrl}}/api/agent/chat
+Content-Type: application/json
+
+{
+  "question": "分析一个 Spring Boot 服务启动后立即退出的常见原因。",
+  "conversationId": "{{contextConversationId}}"
+}
+
+### Context routing: context-dependent GENERAL-like wording inherits CODING
+# Expected: taskType=CODING, modelId=coding, reason starts with "Context-aware router inherited"
+POST {{baseUrl}}/api/agent/route
+Content-Type: application/json
+
+{
+  "question": "所以你有什么规划？",
+  "conversationId": "{{contextConversationId}}"
+}
+
+### Context routing: an explicit new task must override CODING context
+# Expected: taskType=LITERARY, modelId=literary
+POST {{baseUrl}}/api/agent/route
+Content-Type: application/json
+
+{
+  "question": "现在换一个任务，请写一首描写夏夜的现代诗。",
+  "conversationId": "{{contextConversationId}}"
+}
+
+### Semantic router: reusable single-question assertion
+# Fill in question, expectedTaskType, and expectedModelId for one item from
+# docs/semantic-router-test-questions.md.
+# This endpoint only evaluates routing: it does not call a chat model or persist messages.
+POST {{baseUrl}}/api/agent/route
+Content-Type: application/json
+
+{
+  "question": ""
+}
+
+> {%
+    const expectedTaskType = "CODING";
+    const expectedModelId = "coding";
+
+    client.test("semantic route returns HTTP 200", function () {
+        client.assert(response.status === 200, "Expected HTTP 200 but got " + response.status);
+    });
+
+    client.test("semantic route selects expected task type", function () {
+        client.assert(
+            response.body.taskType === expectedTaskType,
+            "Expected taskType=" + expectedTaskType + " but got " + response.body.taskType
+        );
+    });
+
+    client.test("semantic route selects expected model", function () {
+        client.assert(
+            response.body.modelId === expectedModelId,
+            "Expected modelId=" + expectedModelId + " but got " + response.body.modelId
+        );
+    });
+
+    client.test("semantic router handled the request", function () {
+        client.assert(
+            response.body.reason.startsWith("Semantic router selected"),
+            "Rule fallback was used: " + response.body.reason
+        );
+    });
+%}
+
+### Semantic router: inspect raw candidates and rejection reason
+POST {{baseUrl}}/api/agent/route/semantic
+Content-Type: application/json
+
+{
+  "question": ""
+}

@@ -1,4 +1,4 @@
 package com.modelroute.dto;
 
-public record FileRootResponse(String id, boolean enabled) {
+public record FileRootResponse(String id, String displayName, String path, boolean enabled) {
 }

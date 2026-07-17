@@ -2,6 +2,7 @@ package com.modelroute.service;
 
 import com.modelroute.config.ModelRouteProperties;
 import com.modelroute.domain.FileOperationType;
+import com.modelroute.domain.TaskType;
 import com.modelroute.dto.AgentFileOperationRequest;
 import com.modelroute.dto.AgentFileOperationResponse;
 import com.modelroute.dto.FileContentResponse;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AgentFileOperationService {
@@ -45,6 +48,7 @@ public class AgentFileOperationService {
     private final FileAccessService fileAccessService;
     private final FileOperationPlanParser planParser;
     private final FileOperationService fileOperationService;
+    private final WorkspaceRegistry workspaceRegistry;
 
     public AgentFileOperationService(
             TaskRouter taskRouter,
@@ -53,7 +57,8 @@ public class AgentFileOperationService {
             ConversationService conversationService,
             FileAccessService fileAccessService,
             FileOperationPlanParser planParser,
-            FileOperationService fileOperationService) {
+            FileOperationService fileOperationService,
+            WorkspaceRegistry workspaceRegistry) {
         this.taskRouter = taskRouter;
         this.modelRegistry = modelRegistry;
         this.providerDispatcher = providerDispatcher;
@@ -61,14 +66,24 @@ public class AgentFileOperationService {
         this.fileAccessService = fileAccessService;
         this.planParser = planParser;
         this.fileOperationService = fileOperationService;
+        this.workspaceRegistry = workspaceRegistry;
     }
 
     public AgentFileOperationResponse plan(AgentFileOperationRequest request) {
-        RouteDecision routeDecision = taskRouter.route(request.instruction());
+        TaskType lastKnownTaskType = request.conversationId() == null
+                ? null
+                : conversationService.findLastTaskType(request.conversationId()).orElse(null);
+        RouteDecision routeDecision = taskRouter.route(request.instruction(), lastKnownTaskType);
         ModelRouteProperties.ModelDefinition model = modelRegistry.getRequiredModel(routeDecision.modelId());
         List<ChatMessage> messages = providerMessages(request);
         ProviderResponse providerResponse = providerDispatcher.complete(model, messages);
         FileOperationPlan plan = withSelectedSource(planParser.parse(providerResponse.content()), request.selectedPath());
+        if (workspaceRegistry.isSingleFileRoot(request.rootId())
+                && plan.operationType() != FileOperationType.UPDATE_FILE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A directly selected file only authorizes UPDATE_FILE operations");
+        }
 
         FileOperationProposalResponse operation = fileOperationService.propose(new FileOperationProposalRequest(
                 request.conversationId(),
@@ -110,6 +125,9 @@ public class AgentFileOperationService {
                     .append("<untrusted_file_content>\n")
                     .append(file.content())
                     .append("\n</untrusted_file_content>\n");
+            if (workspaceRegistry.isSingleFileRoot(request.rootId())) {
+                prompt.append("Authorization constraint: only UPDATE_FILE is allowed for this selected file.\n");
+            }
         } else {
             prompt.append("Selected relative path: none\n");
         }
@@ -117,7 +135,7 @@ public class AgentFileOperationService {
     }
 
     private FileOperationPlan withSelectedSource(FileOperationPlan plan, String selectedPath) {
-        if (!StringUtils.hasText(selectedPath) || StringUtils.hasText(plan.sourcePath())) {
+        if (!StringUtils.hasText(selectedPath)) {
             return plan;
         }
         if (plan.operationType() != FileOperationType.UPDATE_FILE

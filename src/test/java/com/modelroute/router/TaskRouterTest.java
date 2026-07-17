@@ -8,6 +8,7 @@ import com.modelroute.dto.RouteDecision;
 import com.modelroute.service.ModelRegistry;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class TaskRouterTest {
@@ -47,17 +48,21 @@ class TaskRouterTest {
         assertThat(decision.taskType()).isEqualTo(TaskType.GENERAL);
         assertThat(decision.fallbackUsed()).isTrue();
         assertThat(decision.confidence()).isZero();
+        assertThat(decision.reason()).contains("Semantic router is unavailable");
     }
 
     private TaskRouter taskRouter() throws Exception {
         ModelRouteProperties properties = properties();
         ModelRegistry modelRegistry = new ModelRegistry(properties);
         modelRegistry.afterPropertiesSet();
+        SemanticRouteAdapter semanticRouteAdapter = new SemanticRouteAdapter(
+                Optional.empty(), modelRegistry, properties, new RoutingTextFocusExtractor(properties));
         return new TaskRouter(
                 new RuleEngine(properties),
                 new ScoreCalculator(properties),
                 modelRegistry,
-                properties);
+                properties,
+                semanticRouteAdapter);
     }
 
     private ModelRouteProperties properties() {
@@ -75,8 +80,21 @@ class TaskRouterTest {
                 TaskType.LITERARY, List.of("润色"),
                 TaskType.CODING, List.of("java"),
                 TaskType.MATH, List.of("数学")));
+        router.setSemanticMappings(Map.of(
+                "general", mapping(TaskType.GENERAL, "general-mock"),
+                "daily", mapping(TaskType.DAILY, "general-mock"),
+                "literary", mapping(TaskType.LITERARY, "literary-mock"),
+                "coding", mapping(TaskType.CODING, "coding-mock"),
+                "math", mapping(TaskType.MATH, "math-mock")));
         properties.setRouter(router);
         return properties;
+    }
+
+    private ModelRouteProperties.SemanticRouteMapping mapping(TaskType taskType, String modelId) {
+        ModelRouteProperties.SemanticRouteMapping mapping = new ModelRouteProperties.SemanticRouteMapping();
+        mapping.setTaskType(taskType);
+        mapping.setModelId(modelId);
+        return mapping;
     }
 
     private ModelRouteProperties.ModelDefinition model(String id, List<TaskType> supportedTasks) {

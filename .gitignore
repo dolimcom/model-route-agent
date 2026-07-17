@@ -1,9 +1,11 @@
 # Build output
 /target/
+**/target/
 *.class
 
 # IntelliJ IDEA local state
 /.idea/
+**/.idea/
 *.iml
 *.iws
 *.ipr
@@ -21,6 +23,8 @@ models-local.yml
 models-*.local.yml
 models_local.yml
 models_*.local.yml
+/config/*.local.yml
+!/config/*.example.yml
 
 # Logs
 *.log
@@ -46,8 +50,46 @@ models_*.local.yml
 # VS Code
 /.vscode/
 
+# Local agent and assistant state
+/.agents/
+/.codex/
+/.codex-work/
+
+# Generated document previews
+/docx-render*/
+
+# Local routing evaluation retry snapshots
+/docs/*-retry.json
+
+# Local databases and embedded database state
+*.db
+*.sqlite
+*.sqlite3
+*.mv.db
+*.trace.db
+
+# JVM diagnostics
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# Temporary editor and patch files
+*.tmp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+
+# Optional frontend tooling caches
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+
 # Operating system files
 .DS_Store
 Thumbs.db
-/database/migrations/002_conversation_business_id.sql
-/database/migrations/003_file_operation.sql
+Desktop.ini
+/model-route-semantic-router/.git/

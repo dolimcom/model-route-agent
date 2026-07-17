@@ -1,12 +1,14 @@
 package com.modelroute.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.modelroute.config.FileAccessProperties;
 import com.modelroute.config.FileAccessProperties.AllowedRoot;
+import com.modelroute.config.RuntimeConfigProperties;
 import com.modelroute.domain.FileApprovalMode;
 import com.modelroute.domain.FileOperationStatus;
 import com.modelroute.domain.FileOperationType;
@@ -46,8 +48,10 @@ class FileOperationServiceTest {
             savedOperation.set(operation);
             return operation;
         });
-        operationService = new FileOperationService(
-                operationRepository, new FileAccessService(properties));
+        RuntimeConfigProperties runtime = new RuntimeConfigProperties();
+        runtime.setEnabled(false);
+        operationService = new FileOperationService(operationRepository,
+                new FileAccessService(properties, new WorkspaceRegistry(properties, runtime)));
     }
 
     @Test
@@ -106,6 +110,19 @@ class FileOperationServiceTest {
 
         assertThat(rejected.status()).isEqualTo(FileOperationStatus.REJECTED);
         assertThat(Files.exists(tempDirectory.resolve("rejected-directory"))).isFalse();
+    }
+
+    @Test
+    void rejectsMissingSourceBeforeCreatingPendingProposal() {
+        assertThatThrownBy(() -> operationService.propose(request(
+                FileOperationType.UPDATE_FILE,
+                "missing.txt",
+                null,
+                "new content",
+                FileApprovalMode.MANUAL)))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("File or directory not found");
+        assertThat(savedOperation.get()).isNull();
     }
 
     private FileOperationProposalRequest request(

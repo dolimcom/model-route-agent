@@ -8,6 +8,8 @@ import com.modelroute.dto.FileOperationProposalResponse;
 import com.modelroute.persistence.FileOperation;
 import com.modelroute.persistence.FileOperationRepository;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class FileOperationService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileOperationService.class);
 
     private final FileOperationRepository operationRepository;
     private final FileAccessService fileAccessService;
@@ -43,6 +47,10 @@ public class FileOperationService {
             operation.approve();
             execute(operation);
         }
+        log.info("File operation proposed: id={}, type={}, root={}, source={}, target={}, mode={}, status={}",
+                operation.getOperationId(), operation.getOperationType(), operation.getRootId(),
+                operation.getSourcePath(), operation.getTargetPath(), operation.getApprovalMode(),
+                operation.getStatus());
         return toResponse(operation);
     }
 
@@ -60,6 +68,7 @@ public class FileOperationService {
         requireStatus(operation, FileOperationStatus.PENDING, "Only pending operations can be approved");
         operation.approve();
         execute(operation);
+        log.info("File operation approved: id={}, status={}", operationId, operation.getStatus());
         return toResponse(operation);
     }
 
@@ -68,6 +77,7 @@ public class FileOperationService {
         FileOperation operation = requiredForUpdate(operationId);
         requireStatus(operation, FileOperationStatus.PENDING, "Only pending operations can be rejected");
         operation.reject();
+        log.info("File operation rejected: id={}", operationId);
         return toResponse(operation);
     }
 
@@ -108,8 +118,12 @@ public class FileOperationService {
                 case DELETE -> fileAccessService.delete(operation.getRootId(), operation.getSourcePath());
             }
             operation.executed(beforeContent);
+            log.info("File operation executed: id={}, type={}, root={}",
+                    operation.getOperationId(), operation.getOperationType(), operation.getRootId());
         } catch (RuntimeException exception) {
             operation.failed(errorMessage(exception));
+            log.warn("File operation failed: id={}, type={}, error={}",
+                    operation.getOperationId(), operation.getOperationType(), operation.getErrorMessage());
         }
     }
 
@@ -135,8 +149,12 @@ public class FileOperationService {
                 case DELETE -> restoreDeletedPath(operation);
             }
             operation.rolledBack();
+            log.info("File operation rolled back: id={}, type={}",
+                    operation.getOperationId(), operation.getOperationType());
         } catch (RuntimeException exception) {
             operation.failed("Rollback failed: " + errorMessage(exception));
+            log.warn("File operation rollback failed: id={}, error={}",
+                    operation.getOperationId(), operation.getErrorMessage());
         }
     }
 
@@ -174,12 +192,17 @@ public class FileOperationService {
             case UPDATE_FILE -> {
                 requirePath(request.sourcePath(), "sourcePath");
                 requireContent(request.content());
+                requireExistingSource(request.rootId(), request.sourcePath());
             }
             case RENAME -> {
                 requirePath(request.sourcePath(), "sourcePath");
                 requirePath(request.targetPath(), "targetPath");
+                requireExistingSource(request.rootId(), request.sourcePath());
             }
-            case DELETE -> requirePath(request.sourcePath(), "sourcePath");
+            case DELETE -> {
+                requirePath(request.sourcePath(), "sourcePath");
+                requireExistingSource(request.rootId(), request.sourcePath());
+            }
         }
     }
 
@@ -193,6 +216,10 @@ public class FileOperationService {
         if (content == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "content must not be null");
         }
+    }
+
+    private void requireExistingSource(String rootId, String sourcePath) {
+        fileAccessService.snapshot(rootId, normalized(sourcePath));
     }
 
     private String normalized(String value) {

@@ -1,0 +1,4 @@
+workspaces:
+  - id: agent-workspace
+    path: D:/project/agent-workspace
+    enabled: true

@@ -2,7 +2,6 @@ package com.modelroute.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "model-route.files")
 public class FileAccessProperties {
 
-    @NotEmpty(message = "model-route.files.allowed-roots must contain at least one root")
     @Valid
     private List<AllowedRoot> allowedRoots = new ArrayList<>();
 

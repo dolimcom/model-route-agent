@@ -3,123 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ModelRoute Workspace</title>
+    <meta name="description" content="ModelRoute Agent - configuration-driven local multi-model agent">
+    <title>ModelRoute Agent</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="grain"></div>
-<header class="masthead">
-    <div>
-        <p class="eyebrow">MODELROUTE / LOCAL WORKSPACE</p>
-        <h1>Workspace Console</h1>
-    </div>
-    <div class="status-cluster">
-        <span class="pulse"></span>
-        <span id="statusText">正在连接本地服务</span>
-    </div>
-</header>
-
-<main class="workspace-shell">
-    <aside class="navigator panel">
-        <div class="panel-heading">
+<div class="atmosphere" aria-hidden="true"></div>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <header class="brand-row">
+            <div class="brand-mark">MR</div>
             <div>
-                <span class="step">01</span>
-                <h2>文件导航</h2>
+                <strong>ModelRoute</strong>
+                <span>LOCAL AGENT</span>
             </div>
-            <button id="refreshButton" class="icon-button" type="button" title="刷新">↻</button>
-        </div>
+            <button class="icon-button mobile-close" data-close-panel="sidebar" aria-label="关闭侧栏">×</button>
+        </header>
 
-        <label class="field-label" for="rootSelect">允许根目录</label>
-        <select id="rootSelect"></select>
+        <button class="new-chat-button" id="newConversationButton" type="button">
+            <span>＋</span> 新建对话
+        </button>
 
-        <label class="field-label" for="directoryPath">当前相对路径</label>
-        <div class="path-row">
-            <button id="upButton" class="icon-button" type="button" title="返回上级">←</button>
-            <input id="directoryPath" value="nested" placeholder="nested">
-            <button id="openDirectoryButton" class="small-button" type="button">打开</button>
-        </div>
+        <section class="side-section conversations-section">
+            <div class="section-label"><span>对话</span><button id="refreshConversationsButton">刷新</button></div>
+            <div class="conversation-list" id="conversationList"></div>
+        </section>
 
-        <div id="entryList" class="entry-list" aria-live="polite"></div>
+        <section class="side-section workspace-section">
+            <div class="section-label">
+                <span>工作区</span>
+                <button class="add-workspace" id="addWorkspaceButton" title="选择本机目录">＋</button>
+            </div>
+            <select id="workspaceSelect" aria-label="当前工作区"></select>
+            <div class="workspace-path" id="workspacePath">尚未选择目录</div>
+            <div class="folder-nav">
+                <button class="icon-button" id="folderBackButton" title="返回上一级">←</button>
+                <code id="folderBreadcrumb">/</code>
+            </div>
+            <div class="file-tree" id="fileTree"></div>
+        </section>
 
-        <button id="createDirectoryButton" class="outline-button full-width" type="button">
-            + 新建目录
+        <button class="settings-button" id="settingsButton" type="button">
+            <span>⚙</span>
+            <span><strong>模型设置</strong><small>路由与 Provider 配置</small></span>
         </button>
     </aside>
 
-    <section class="editor panel">
-        <div class="panel-heading">
-            <div>
-                <span class="step">02</span>
-                <h2>内容编辑器</h2>
+    <main class="chat-column">
+        <header class="chat-header">
+            <button class="icon-button mobile-menu" data-open-panel="sidebar" aria-label="打开侧栏">☰</button>
+            <div class="chat-heading">
+                <span class="live-dot"></span>
+                <div><strong id="activeConversationTitle">新对话</strong><small id="routeStatus">等待任务</small></div>
             </div>
-            <span id="byteCount" class="byte-count">0 B</span>
-        </div>
-
-        <div class="agent-command-card">
-            <div class="agent-command-heading">
-                <span>AGENT FILE COMMAND</span>
-                <span>DAY 10</span>
+            <div class="header-actions">
+                <span class="route-chip" id="routeChip">AUTO ROUTE</span>
+                <button class="icon-button mobile-menu" data-open-panel="activityPanel" aria-label="打开操作面板">◫</button>
             </div>
-            <label class="field-label" for="agentInstruction">用自然语言描述文件操作</label>
-            <textarea id="agentInstruction" class="agent-instruction" spellcheck="false"
-                      placeholder="例如：把当前文件改成两行，并在第二行注明由 Agent 更新。"></textarea>
-            <button id="planFileOperationButton" class="primary-button full-width" type="button">
-                生成操作提案
-            </button>
-            <p id="agentAnswer" class="agent-answer">选择文件后输入指令，模型生成的操作仍受右侧审批模式控制。</p>
+        </header>
+
+        <div class="chat-scroll" id="chatScroll">
+            <section class="configuration-notice" id="configurationNotice" hidden>
+                <div>
+                    <strong id="configurationNoticeTitle">模型尚未配置</strong>
+                    <span id="configurationNoticeText">当前使用默认 Mock 模型。</span>
+                </div>
+                <button id="configureModelsButton" type="button">立即配置</button>
+                <button class="notice-close" id="dismissConfigurationNotice" type="button" aria-label="暂时关闭">×</button>
+            </section>
+            <section class="empty-state" id="emptyState">
+                <p class="kicker">ONE PROMPT · THE RIGHT MODEL</p>
+                <h1>把问题交给最合适的模型。</h1>
+                <p>语义路由会结合当前对话、选中文件和任务类型选择模型。明确的文件修改会进入审批与可回滚流程。</p>
+                <div class="prompt-suggestions">
+                    <button data-prompt="分析当前选中的 Java 文件，指出潜在问题。">分析当前文件</button>
+                    <button data-prompt="帮我制定一份明天上午的学习计划。">制定学习计划</button>
+                    <button data-prompt="把下面的文字改写得更有文学性。">文学改写</button>
+                </div>
+            </section>
+            <div class="message-list" id="messageList"></div>
+            <section class="approval-dock" id="approvalDock" hidden>
+                <div class="approval-title"><span>等待你的确认</span><strong id="pendingCount">0</strong></div>
+                <div id="pendingOperations"></div>
+            </section>
         </div>
 
-        <label class="field-label" for="filePath">文件相对路径</label>
-        <input id="filePath" placeholder="nested/example.txt">
+        <footer class="composer-wrap">
+            <div class="context-chips" id="contextChips"></div>
+            <form class="composer" id="composerForm">
+                <textarea id="questionInput" rows="1" maxlength="20000"
+                          placeholder="输入问题，或让 Agent 操作已授权工作区…"></textarea>
+                <div class="composer-toolbar">
+                    <div class="composer-tools">
+                        <button class="tool-button" id="attachButton" type="button" title="附加文本文件" aria-label="附加文本文件">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8.5 12.5 14.7 6.3a3.2 3.2 0 0 1 4.5 4.5l-8.1 8.1a5 5 0 0 1-7.1-7.1l8-8"/>
+                            </svg>
+                        </button>
+                        <input id="attachmentInput" type="file" hidden>
+                        <select id="approvalMode" aria-label="文件操作授权模式">
+                            <option value="MANUAL">手动审批</option>
+                            <option value="FULL_ACCESS">全权访问</option>
+                        </select>
+                    </div>
+                    <div class="send-tools">
+                        <span id="characterCount">0 / 20000</span>
+                        <button class="send-button" id="sendButton" type="submit" aria-label="发送">↑</button>
+                    </div>
+                </div>
+            </form>
+            <p class="composer-note">模型输出可能有误。文件操作仅限已授权目录，并保留审计记录。</p>
+        </footer>
+    </main>
 
-        <label class="field-label" for="fileContent">UTF-8 文本内容</label>
-        <textarea id="fileContent" spellcheck="false" placeholder="选择文件，或输入新文件内容..."></textarea>
-
-        <div class="action-grid">
-            <button id="createFileButton" class="primary-button" type="button">创建文件</button>
-            <button id="saveFileButton" class="primary-button accent" type="button">保存修改</button>
-            <button id="renameButton" class="outline-button" type="button">重命名</button>
-            <button id="deleteButton" class="danger-button" type="button">删除</button>
+    <aside class="activity-panel" id="activityPanel">
+        <header class="activity-header">
+            <div><span>ACTIVITY</span><strong>操作记录</strong></div>
+            <button class="icon-button mobile-close" data-close-panel="activityPanel" aria-label="关闭操作面板">×</button>
+        </header>
+        <div class="selected-context-card" id="selectedContextCard">
+            <span>当前上下文</span>
+            <strong id="selectedFileName">未选择文件</strong>
+            <code id="selectedFilePath">从左侧工作区选择文件</code>
+            <button id="previewSelectedButton" type="button" disabled>预览文件</button>
         </div>
-    </section>
-
-    <aside class="approval panel">
-        <div class="panel-heading">
-            <div>
-                <span class="step">03</span>
-                <h2>审批队列</h2>
-            </div>
-            <button id="refreshOperationsButton" class="icon-button" type="button" title="刷新审批队列">↻</button>
-        </div>
-
-        <label class="field-label" for="approvalMode">文件操作模式</label>
-        <select id="approvalMode">
-            <option value="MANUAL">手动审批</option>
-            <option value="FULL_ACCESS">全权访问</option>
-        </select>
-        <p id="approvalHint" class="approval-copy">操作会先进入待审批队列，批准后才会修改文件。</p>
-
-        <div class="queue-heading">
-            <span>待审批</span>
-            <strong id="pendingCount">0</strong>
-        </div>
-        <div id="pendingOperations" class="operation-list" aria-live="polite"></div>
-
-        <div class="queue-heading history-heading">
-            <span>最近记录</span>
-            <button id="rollbackLastButton" class="text-button" type="button">回滚最近操作</button>
-        </div>
-        <div id="recentOperations" class="operation-list compact" aria-live="polite"></div>
-
-        <div class="preview-card">
-            <span>LAST OPERATION</span>
-            <strong id="lastOperation">尚无操作</strong>
-            <code id="lastOperationPath">—</code>
-        </div>
+        <div class="activity-list" id="operationList"></div>
     </aside>
-</main>
+</div>
 
-<div id="toast" class="toast" role="status"></div>
+<div class="panel-scrim" id="panelScrim"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<dialog class="modal settings-modal" id="settingsModal">
+    <form method="dialog" class="modal-frame" id="settingsForm">
+        <header class="modal-header">
+            <div><span>ROUTING MATRIX</span><h2>模型配置</h2></div>
+            <button class="modal-close" id="closeSettingsButton" type="button" aria-label="关闭">×</button>
+        </header>
+        <div class="task-tabs" id="taskTabs"></div>
+        <div class="settings-body">
+            <label>自定义名称<input id="modelDisplayName" placeholder="留空则使用模型名"></label>
+            <label>模型
+                <select id="modelNameSelect"></select>
+            </label>
+            <label id="customModelField" hidden>自定义模型名<input id="customModelName"></label>
+            <label>Base URL<input id="modelBaseUrl" type="url" required></label>
+            <label>API Key
+                <input id="modelApiKey" type="password" autocomplete="off" placeholder="留空则保留现有 Key">
+                <small id="apiKeyStatus"></small>
+            </label>
+            <div class="settings-grid">
+                <label>Provider<input id="modelProvider" readonly></label>
+                <label>Timeout (ms)<input id="modelTimeout" type="number" min="1000" max="300000" required></label>
+                <label>Max tokens<input id="modelMaxTokens" type="number" min="1" max="131072" required></label>
+            </div>
+            <label class="temperature-field">
+                <span>Temperature <output id="temperatureValue">0.7</output></span>
+                <input id="modelTemperature" type="range" min="0" max="2" step="0.05">
+                <span class="range-scale"><small>精确</small><small>平衡</small><small>发散</small></span>
+            </label>
+        </div>
+        <footer class="modal-footer">
+            <span>Key 不会通过配置查询接口返回。</span>
+            <button class="save-settings" id="saveSettingsButton" type="submit">保存当前任务配置</button>
+        </footer>
+    </form>
+</dialog>
+
+<dialog class="modal preview-modal" id="previewModal">
+    <div class="modal-frame">
+        <header class="modal-header">
+            <div><span>READ ONLY</span><h2 id="previewTitle">文件预览</h2></div>
+            <button class="modal-close" id="closePreviewButton" type="button" aria-label="关闭">×</button>
+        </header>
+        <pre id="previewContent"></pre>
+    </div>
+</dialog>
+
 <script src="/app.js" defer></script>
 </body>
 </html>

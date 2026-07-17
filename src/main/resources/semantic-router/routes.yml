@@ -1,0 +1,209 @@
+configVersion: agent-routes-v7
+datasetVersion: agent-routes-boundary-calibration-2026-07-16
+encoderVersion: bge-m3
+
+policy:
+  minScore: 0.42
+  outOfDomainThreshold: 0.30
+  minMargin: 0.0
+  tieTolerance: 0.0
+  semanticWeight: 0.85
+  keywordWeight: 0.15
+  softHintBoost: 0.1
+  topCandidates: 5
+  fallback:
+    emptyInput: REJECT
+    lowConfidence: LAST_KNOWN_GOOD
+    ambiguous: REJECT
+    outOfDomain: REJECT
+    encoderError: LAST_KNOWN_GOOD
+    tie: REJECT
+
+routes:
+  - routeId: followup
+    target: last-known
+    description: Context-dependent follow-up that cannot be understood without the preceding conversation
+    keywords: [继续, 上面, 刚才, 这个, 所以, 然后, 精简, 改一下]
+    aggregationMode: MAX
+    metadata:
+      requiresContext: "true"
+    utterances:
+      - 继续说下去
+      - 所以你有什么规划
+      - 把上面的内容精简一下
+      - 为什么会这样
+      - 然后呢
+      - 按照刚才的思路继续
+      - 把这个改得更简单一些
+      - 给出一个更短的版本
+      - 具体应该怎么处理
+      - 请进一步解释
+      - 用一句话概括上面的内容
+      - 对刚才的结果做一点调整
+
+  - routeId: general
+    target: general
+    description: General knowledge, explanations, advice, summaries, and uncategorized conversation
+    keywords: [解释, 介绍, 建议, 总结, 为什么, 是什么]
+    aggregationMode: MAX
+    utterances:
+      - 请解释人工智能的基本概念
+      - 用简单的话介绍这个问题
+      - 帮我总结一下前面的讨论
+      - 对这件事给我一些建议
+      - 为什么天空看起来是蓝色的
+      - 比较这两种方案的优缺点
+      - 请回答一个常识性问题
+      - 帮我梳理一下目前的信息
+      - 解释一种社会现象产生的原因
+      - 分析某种生活习惯为什么影响健康
+      - 客观比较两个事物的特点
+      - 介绍一个概念的含义和背景
+      - 说明某种心理现象为什么发生
+      - 评价一项新事物可能带来的影响
+      - 回答一个不要求执行方案的知识问题
+      - 用通俗语言解释专业名词
+      - 解释礼仪、信用、审美和社会规则的意义
+      - 讨论学习、工作和生活现象背后的原因
+      - 介绍软件或新技术如何影响普通人
+      - 解释时间管理、工作效率或生活选择为什么困难但不制定计划
+      - 判断观点和证据是否可靠而不执行专业任务
+      - 说明一个活动或习惯的价值，而不是为它制定日程
+      - 比较两种沟通媒介、学习方式或生活方式的特点
+      - 解释带有专业术语的概念，但不执行该专业任务
+      - 评价长期坚持某件事的意义和影响
+      - 介绍保险、礼仪和公共规则解决的现实问题
+      - 用直觉解释数学概念的含义而不做公式推导
+      - Explain whether a source or claim is credible and why
+
+  - routeId: daily
+    target: general
+    description: Daily planning, schedules, reminders, habits, and personal productivity
+    keywords: [计划, 日程, 提醒, 待办, 学习安排, 时间管理]
+    aggregationMode: MAX
+    utterances:
+      - 帮我安排明天上午的学习计划
+      - 给我制定一份一周健身日程
+      - 提醒我晚上提交作业
+      - 把这些事情整理成待办清单
+      - 我应该怎样分配今天的时间
+      - 帮我设计一个早睡早起的习惯方案
+      - 将工作安排调整得轻松一些
+      - 为考试复习制定每日目标
+      - 直接给我一个执行顺序
+      - 把不同类型的任务安排进同一天
+      - 根据截止时间确定事情的先后顺序
+      - 帮我列一份出门前的检查清单
+      - 将原来的安排调整得更轻松
+      - 为日常习惯设计一周执行方案
+      - 身体状态不好时为必须完成的任务安排最低负担方案
+      - 为会议、汇报或活动设计事前事中事后的执行步骤
+      - 根据精力和硬性截止要求给出最低可行安排
+      - 只安排混合任务的顺序而不解决任务内容
+      - 把一个目标拆成当天可以完成的轻量行动
+
+  - routeId: literary
+    target: literary
+    description: Literary writing, polishing, poetry, fiction, copywriting, and literary criticism
+    keywords: [文学, 小说, 诗歌, 散文, 润色, 文案, 叙事, 作家, 故事, 角色, 描写, 写法, 留白, 意象, 比喻, 台词, 语气, 暗示, 独白]
+    aggregationMode: MAX
+    utterances:
+      - 分析这部小说的叙事结构
+      - 帮我写一首关于夏夜的现代诗
+      - 把这段文字润色得更有文学性
+      - 比较两位作家的写作风格
+      - 为故事设计一个富有张力的结尾
+      - 解读这首诗中的意象和情感
+      - 帮我创作一段产品宣传文案
+      - 评价这篇散文的语言特点
+      - 扩写一句话并增加画面感
+      - 用特定人物视角描写一个场景
+      - 通过动作细节塑造人物性格
+      - 为短篇故事设计开头和结尾
+      - 分析叙事技巧对读者产生的效果
+      - 把普通表达改得含蓄而有感染力
+      - 创作一段对白或心理描写
+      - 为作品拟标题或宣传短句
+      - 解释故事结构、人物细节和表现手法的作用
+      - 将技术或日常主题转换成具有文学性的表达
+      - 保持事实不变但增强文字的感染力
+      - 将技术术语作为意象、比喻或故事素材进行创作
+      - 只改变台词和句子的语气而不改变事实
+      - 将事实通知改写得温暖而正式
+      - 把日程、数字或技术概念作为故事背景设计冲突
+      - 用一个故事向儿童解释抽象情感
+      - 把普通句子改成适合海报的短句
+      - 保留事实前提下调整文风并增强感染力
+
+  - routeId: coding
+    target: coding
+    description: Programming, code generation, debugging, software design, and technical implementation
+    keywords: [代码, 编程, Java, Python, bug, 调试, 接口, 数据库, Spring, 事务, 线程池, Controller, JSON, API, 缓存, 队列, 反序列化, 数据结构, 定时任务]
+    aggregationMode: MAX
+    utterances:
+      - 帮我排查这段 Java 代码的空指针异常
+      - 这个 Spring Boot 接口为什么返回 500
+      - 请为这个服务编写单元测试
+      - 设计一个 RESTful API 的后端实现
+      - 优化这条 SQL 查询的性能
+      - 解释这段 Python 程序的执行过程
+      - Maven 编译失败应该如何定位
+      - 重构这个类并减少重复代码
+      - 解释并发、事务、缓存或线程池的技术原理
+      - 设计消息存储和分页查询的数据结构
+      - 分析文件路径、令牌和接口参数的安全风险
+      - 为后端操作设计状态机和审计记录
+      - 定位性能下降、连接耗尽或内存增长问题
+      - 设计可扩展的客户端和供应商适配层
+      - 实现日程、待办或文本处理相关的软件接口
+      - 审查一段后端设计是否存在一致性问题
+      - 解释锁、事务注解和线程安全为什么失效
+      - 处理定时任务、异步操作和消息顺序问题
+      - 验证上传文件格式并限制内存占用
+      - 设计支持失败重试和幂等处理的后台任务
+      - 编写函数或程序自动完成数学计算
+      - 把清单、提醒和文本内容转换成 JSON 数据结构
+      - 使用锁或数据库条件更新保证并发请求只能成功一次
+      - 设计幂等机制避免重复请求创建重复记录
+      - 实现提醒时间、优先级和截止日期的解析或排序逻辑
+      - 用 Java 编写数值求解程序而不是手工计算
+      - 排查 CPU、并行流或外部请求性能并设计观测指标
+      - 测试并发场景下自增序列和审批状态是否唯一
+      - 实现服务层、比较器或解析器处理业务输入
+
+  - routeId: math
+    target: math
+    description: Mathematics, calculations, equations, probability, proofs, and quantitative reasoning
+    keywords: [数学, 方程, 微积分, 概率, 几何, 证明, 计算, 函数]
+    aggregationMode: MAX
+    utterances:
+      - 求解这个二次方程并写出步骤
+      - 计算这个函数的导数
+      - 解释条件概率和贝叶斯公式
+      - 证明这个几何命题
+      - 帮我计算这道微积分题
+      - 求一个数列的通项公式
+      - 分析这组数据的期望和方差
+      - 解答一道线性代数问题
+      - 根据速度时间和处理速率计算总量
+      - 计算百分比变化、折扣和成本差额
+      - 解答带有日常背景的应用题
+      - 根据文件增长速度计算一段时间后的大小
+      - 计算请求吞吐量和单位时间内的处理数量
+      - 手工求递推关系、数列或方程的结果
+      - 比较两个数量并计算它们的比例
+      - 不编写程序，直接完成数值推导
+      - 解释负数、矩阵和除法规则为什么成立
+      - 完成排列组合并计算有多少种选择
+      - 分析数学命题并给出简洁证明
+      - 根据每秒处理数量和持续时间计算总量
+      - 计算成功率、命中率、百分比和平均值
+      - 根据人数与配对关系计算有多少种组合
+      - 给定线程数量与单线程速率直接计算总吞吐量
+      - 根据数据库总行数与删除比例计算剩余行数
+      - 根据每天阅读页数直接计算完成天数
+      - 计算命中率从一个百分比到另一个百分比提高了多少个百分点
+      - 在故事角色背景下计算两两配对数量
+      - 根据圆的周长公式计算半径
+      - 问题带有技术名词但只要求算出数值结果
+      - 根据每天处理数量和天数计算一周总量

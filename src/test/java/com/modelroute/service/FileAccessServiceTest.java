@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.modelroute.config.FileAccessProperties;
 import com.modelroute.config.FileAccessProperties.AllowedRoot;
+import com.modelroute.config.RuntimeConfigProperties;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -30,7 +31,9 @@ class FileAccessServiceTest {
         root.setId("test-root");
         root.setPath(tempDirectory.toString());
         properties.setAllowedRoots(List.of(root));
-        fileAccessService = new FileAccessService(properties);
+        RuntimeConfigProperties runtime = new RuntimeConfigProperties();
+        runtime.setEnabled(false);
+        fileAccessService = new FileAccessService(properties, new WorkspaceRegistry(properties, runtime));
     }
 
     @Test
@@ -39,6 +42,19 @@ class FileAccessServiceTest {
         assertThat(fileAccessService.list("test-root", ""))
                 .extracting("relativePath")
                 .contains("notes.txt", "nested");
+    }
+
+    @Test
+    void allowsApplicationToStartWithNoConfiguredRoots() {
+        FileAccessProperties emptyProperties = new FileAccessProperties();
+        RuntimeConfigProperties runtime = new RuntimeConfigProperties();
+        runtime.setEnabled(false);
+
+        FileAccessService emptyService = new FileAccessService(
+                emptyProperties,
+                new WorkspaceRegistry(emptyProperties, runtime));
+
+        assertThat(emptyService.listRoots()).isEmpty();
     }
 
     @Test

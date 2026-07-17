@@ -1,4 +1,6 @@
 spring:
+  main:
+    headless: true
   config:
     import:
       - classpath:models_test.yml
@@ -13,7 +15,16 @@ spring:
       ddl-auto: create-drop
     open-in-view: false
 
+semantic:
+  router:
+    enabled: false
+
 model-route:
+  runtime:
+    enabled: false
+    models-file: ./target/test-runtime/models.local.yml
+    workspaces-file: ./target/test-runtime/workspaces.local.yml
+    chooser-state-file: ./target/test-runtime/chooser-state.local.yml
   files:
     allowed-roots:
       - id: agent-workspace

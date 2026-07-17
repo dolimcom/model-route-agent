@@ -4,9 +4,11 @@ import com.modelroute.config.ModelRouteProperties;
 import com.modelroute.domain.TaskType;
 import com.modelroute.dto.RouteDecision;
 import com.modelroute.service.ModelRegistry;
+import com.dolimcom.semanticrouter.model.RoutingResult;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 /**
@@ -19,19 +21,46 @@ public class TaskRouter {
     private final ScoreCalculator scoreCalculator;
     private final ModelRegistry modelRegistry;
     private final ModelRouteProperties properties;
+    private final SemanticRouteAdapter semanticRouteAdapter;
 
     public TaskRouter(
             RuleEngine ruleEngine,
             ScoreCalculator scoreCalculator,
             ModelRegistry modelRegistry,
-            ModelRouteProperties properties) {
+            ModelRouteProperties properties,
+            SemanticRouteAdapter semanticRouteAdapter) {
         this.ruleEngine = ruleEngine;
         this.scoreCalculator = scoreCalculator;
         this.modelRegistry = modelRegistry;
         this.properties = properties;
+        this.semanticRouteAdapter = semanticRouteAdapter;
     }
 
     public RouteDecision route(String question) {
+        return route(question, null);
+    }
+
+    public RouteDecision route(String question, TaskType lastKnownTaskType) {
+        SemanticRouteAttempt semanticAttempt = semanticRouteAdapter.attempt(question, lastKnownTaskType);
+        return semanticAttempt.decision().orElseGet(() -> withSemanticDiagnostic(
+                routeWithRules(question), semanticAttempt.diagnostic()));
+    }
+
+    private RouteDecision withSemanticDiagnostic(RouteDecision ruleDecision, String diagnostic) {
+        return new RouteDecision(
+                ruleDecision.taskType(),
+                ruleDecision.modelId(),
+                ruleDecision.confidence(),
+                ruleDecision.fallbackUsed(),
+                ruleDecision.scores(),
+                diagnostic + " " + ruleDecision.reason());
+    }
+
+    public Optional<RoutingResult> semanticRoute(String question, TaskType lastKnownTaskType) {
+        return semanticRouteAdapter.evaluate(question, lastKnownTaskType);
+    }
+
+    private RouteDecision routeWithRules(String question) {
         RuleAnalysis analysis = ruleEngine.analyze(question);
         Map<TaskType, Integer> scores = scoreCalculator.calculate(analysis);
         List<Map.Entry<TaskType, Integer>> rankedScores = scores.entrySet().stream()

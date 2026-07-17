@@ -7,8 +7,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -168,6 +171,18 @@ public class ModelRouteProperties {
         @Valid
         private Scoring scoring = new Scoring();
 
+        @NotNull(message = "model-route.router.context must be configured")
+        @Valid
+        private ContextRouting context = new ContextRouting();
+
+        @NotEmpty(message = "model-route.router.semantic-mappings must not be empty")
+        @Valid
+        private Map<String, SemanticRouteMapping> semanticMappings = new LinkedHashMap<>();
+
+        @NotNull(message = "model-route.router.focus must be configured")
+        @Valid
+        private FocusRouting focus = new FocusRouting();
+
         public String getFallbackModelId() {
             return fallbackModelId;
         }
@@ -190,6 +205,213 @@ public class ModelRouteProperties {
 
         public void setScoring(Scoring scoring) {
             this.scoring = scoring;
+        }
+
+        public ContextRouting getContext() {
+            return context;
+        }
+
+        public void setContext(ContextRouting context) {
+            this.context = context;
+        }
+
+        public Map<String, SemanticRouteMapping> getSemanticMappings() {
+            return semanticMappings;
+        }
+
+        public void setSemanticMappings(Map<String, SemanticRouteMapping> semanticMappings) {
+            this.semanticMappings = semanticMappings;
+        }
+
+        public FocusRouting getFocus() {
+            return focus;
+        }
+
+        public void setFocus(FocusRouting focus) {
+            this.focus = focus;
+        }
+    }
+
+    public static class SemanticRouteMapping {
+
+        @NotNull(message = "semantic mapping task-type must be configured")
+        private TaskType taskType;
+
+        @NotBlank(message = "semantic mapping model-id must not be blank")
+        private String modelId;
+
+        public TaskType getTaskType() {
+            return taskType;
+        }
+
+        public void setTaskType(TaskType taskType) {
+            this.taskType = taskType;
+        }
+
+        public String getModelId() {
+            return modelId;
+        }
+
+        public void setModelId(String modelId) {
+            this.modelId = modelId;
+        }
+    }
+
+    public static class FocusRouting {
+
+        private boolean enabled;
+
+        @Min(value = 1, message = "minimum-focused-length must be at least 1")
+        private int minimumFocusedLength = 2;
+        private List<String> switchMarkers = new ArrayList<>();
+        private List<String> focusMarkers = new ArrayList<>();
+        private List<String> trailingConstraints = new ArrayList<>();
+        private List<String> acknowledgements = new ArrayList<>();
+        private List<String> requestMarkers = new ArrayList<>();
+        private List<String> ignoredRequestPrefixes = new ArrayList<>();
+        private List<String> boundaryDelimiters = new ArrayList<>();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public int getMinimumFocusedLength() {
+            return minimumFocusedLength;
+        }
+
+        public void setMinimumFocusedLength(int minimumFocusedLength) {
+            this.minimumFocusedLength = minimumFocusedLength;
+        }
+
+        public List<String> getSwitchMarkers() {
+            return switchMarkers;
+        }
+
+        public void setSwitchMarkers(List<String> switchMarkers) {
+            this.switchMarkers = switchMarkers;
+        }
+
+        public List<String> getFocusMarkers() {
+            return focusMarkers;
+        }
+
+        public void setFocusMarkers(List<String> focusMarkers) {
+            this.focusMarkers = focusMarkers;
+        }
+
+        public List<String> getTrailingConstraints() {
+            return trailingConstraints;
+        }
+
+        public void setTrailingConstraints(List<String> trailingConstraints) {
+            this.trailingConstraints = trailingConstraints;
+        }
+
+        public List<String> getAcknowledgements() {
+            return acknowledgements;
+        }
+
+        public void setAcknowledgements(List<String> acknowledgements) {
+            this.acknowledgements = acknowledgements;
+        }
+
+        public List<String> getRequestMarkers() {
+            return requestMarkers;
+        }
+
+        public void setRequestMarkers(List<String> requestMarkers) {
+            this.requestMarkers = requestMarkers;
+        }
+
+        public List<String> getIgnoredRequestPrefixes() {
+            return ignoredRequestPrefixes;
+        }
+
+        public void setIgnoredRequestPrefixes(List<String> ignoredRequestPrefixes) {
+            this.ignoredRequestPrefixes = ignoredRequestPrefixes;
+        }
+
+        public List<String> getBoundaryDelimiters() {
+            return boundaryDelimiters;
+        }
+
+        public void setBoundaryDelimiters(List<String> boundaryDelimiters) {
+            this.boundaryDelimiters = boundaryDelimiters;
+        }
+    }
+
+    public static class ContextRouting {
+
+        private boolean enabled = true;
+
+        @NotBlank(message = "followup-route-id must not be blank")
+        private String followupRouteId = "followup";
+
+        @NotBlank(message = "general-route-id must not be blank")
+        private String generalRouteId = "general";
+
+        @DecimalMin(value = "0.0", message = "minimum-followup-score must be at least 0")
+        @DecimalMax(value = "1.0", message = "minimum-followup-score must not exceed 1")
+        private double minimumFollowupScore = 0.50d;
+
+        @DecimalMin(value = "0.0", message = "maximum-general-score-gap must be at least 0")
+        @DecimalMax(value = "1.0", message = "maximum-general-score-gap must not exceed 1")
+        private double maximumGeneralScoreGap = 0.12d;
+
+        @DecimalMin(value = "0.0", message = "maximum-specialist-score-gap must be at least 0")
+        @DecimalMax(value = "1.0", message = "maximum-specialist-score-gap must not exceed 1")
+        private double maximumSpecialistScoreGap = 0.02d;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getFollowupRouteId() {
+            return followupRouteId;
+        }
+
+        public void setFollowupRouteId(String followupRouteId) {
+            this.followupRouteId = followupRouteId;
+        }
+
+        public String getGeneralRouteId() {
+            return generalRouteId;
+        }
+
+        public void setGeneralRouteId(String generalRouteId) {
+            this.generalRouteId = generalRouteId;
+        }
+
+        public double getMinimumFollowupScore() {
+            return minimumFollowupScore;
+        }
+
+        public void setMinimumFollowupScore(double minimumFollowupScore) {
+            this.minimumFollowupScore = minimumFollowupScore;
+        }
+
+        public double getMaximumGeneralScoreGap() {
+            return maximumGeneralScoreGap;
+        }
+
+        public void setMaximumGeneralScoreGap(double maximumGeneralScoreGap) {
+            this.maximumGeneralScoreGap = maximumGeneralScoreGap;
+        }
+
+        public double getMaximumSpecialistScoreGap() {
+            return maximumSpecialistScoreGap;
+        }
+
+        public void setMaximumSpecialistScoreGap(double maximumSpecialistScoreGap) {
+            this.maximumSpecialistScoreGap = maximumSpecialistScoreGap;
         }
     }
 

@@ -1,46 +1,57 @@
 model-route:
   models:
-    - id: general-mock
+    - id: general
       display-name: General Mock Model
       provider: mock
       enabled: true
+      base-url: ""
+      api-key: ""
       model-name: general-mock
-      supported-tasks:
-        - GENERAL
-        - DAILY
-    - id: literary-mock
-      display-name: Literary Mock Model
-      provider: mock
-      enabled: true
-      model-name: literary-mock
-      supported-tasks:
-        - LITERARY
-    - id: coding-mock
-      display-name: Coding Mock Model
-      provider: mock
-      enabled: true
-      model-name: coding-mock
-      supported-tasks:
-        - CODING
-    - id: math-mock
-      display-name: Math Mock Model
-      provider: mock
-      enabled: true
-      model-name: math-mock
-      supported-tasks:
-        - MATH
-
-    # Day 5 testing template. It remains disabled until a real provider client is implemented.
-    # Keep the API key in an environment variable or ignored local config, never in committed YAML.
-    - id: openai-compatible-test
-      display-name: OpenAI Compatible Test Model
-      provider: openai-compatible
-      enabled: false
-      base-url: https://api.example.com/v1
-      api-key: ${MODEL_ROUTE_API_KEY:}
-      model-name: replace-with-provider-model-name
       timeout-ms: 15000
       max-tokens: 1024
       temperature: 0.7
-      supported-tasks:
-        - GENERAL
+      supported-tasks: [GENERAL]
+    - id: daily
+      display-name: Daily Mock Model
+      provider: mock
+      enabled: true
+      base-url: ""
+      api-key: ""
+      model-name: daily-mock
+      timeout-ms: 15000
+      max-tokens: 1024
+      temperature: 0.7
+      supported-tasks: [DAILY]
+    - id: literary
+      display-name: Literary Mock Model
+      provider: mock
+      enabled: true
+      base-url: ""
+      api-key: ""
+      model-name: literary-mock
+      timeout-ms: 15000
+      max-tokens: 1024
+      temperature: 0.7
+      supported-tasks: [LITERARY]
+    - id: coding
+      display-name: Coding Mock Model
+      provider: mock
+      enabled: true
+      base-url: ""
+      api-key: ""
+      model-name: coding-mock
+      timeout-ms: 15000
+      max-tokens: 1024
+      temperature: 0.7
+      supported-tasks: [CODING]
+    - id: math
+      display-name: Math Mock Model
+      provider: mock
+      enabled: true
+      base-url: ""
+      api-key: ""
+      model-name: math-mock
+      timeout-ms: 15000
+      max-tokens: 1024
+      temperature: 0.7
+      supported-tasks: [MATH]

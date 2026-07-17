@@ -12,19 +12,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.modelroute.provider.ModelProviderDispatcher;
 import com.modelroute.provider.ModelProviderException;
 import com.modelroute.provider.ProviderResponse;
+import reactor.core.publisher.Flux;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,13 +39,15 @@ class ModelRouteApplicationTests {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private ModelProviderDispatcher providerDispatcher;
 
     @BeforeEach
     void stubProviderDispatcher() {
         given(providerDispatcher.complete(any(), any()))
                 .willReturn(new ProviderResponse("[Test provider response]"));
+        given(providerDispatcher.stream(any(), any()))
+                .willReturn(Flux.just("Streamed ", "test response"));
     }
 
     @Test
@@ -61,6 +66,18 @@ class ModelRouteApplicationTests {
                 .andExpect(jsonPath("$.route.taskType").value("CODING"))
                 .andExpect(jsonPath("$.route.modelId").value("coding-mock"))
                 .andExpect(jsonPath("$.route.fallbackUsed").value(false));
+    }
+
+    @Test
+    void routeEndpointDoesNotInvokeModelProvider() throws Exception {
+        mockMvc.perform(post("/api/agent/route")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"请帮我分析这段 Java 代码的 bug\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.taskType").value("CODING"))
+                .andExpect(jsonPath("$.modelId").value("coding-mock"));
+
+        org.mockito.BDDMockito.then(providerDispatcher).shouldHaveNoInteractions();
     }
 
     @Test
@@ -94,6 +111,17 @@ class ModelRouteApplicationTests {
     }
 
     @Test
+    void modelStatusReportsUnconfiguredMockSlots() throws Exception {
+        mockMvc.perform(get("/api/settings/models/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.runtimeFileExists").value(false))
+                .andExpect(jsonPath("$.configuredSlots").value(0))
+                .andExpect(jsonPath("$.totalSlots").value(5))
+                .andExpect(jsonPath("$.fullyConfigured").value(false))
+                .andExpect(jsonPath("$.mockTasks.length()").value(5));
+    }
+
+    @Test
     void providerFailureReturnsReadableBadGatewayResponse() throws Exception {
         given(providerDispatcher.complete(any(), any()))
                 .willThrow(new ModelProviderException("Provider denied model access"));
@@ -105,6 +133,76 @@ class ModelRouteApplicationTests {
                 .andExpect(jsonPath("$.status").value(502))
                 .andExpect(jsonPath("$.message").value("Provider denied model access"))
                 .andExpect(jsonPath("$.path").value("/api/agent/chat"));
+    }
+
+    @Test
+    void providerFailureDoesNotPersistPartialConversationExchange() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/conversations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Failed provider exchange\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String conversationId = objectMapper.readTree(createResponse).get("id").asText();
+        given(providerDispatcher.complete(any(), any()))
+                .willThrow(new ModelProviderException("Temporary provider failure"));
+
+        mockMvc.perform(post("/api/agent/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"请分析 Java 服务\",\"conversationId\":\""
+                                + conversationId + "\"}"))
+                .andExpect(status().isBadGateway());
+
+        mockMvc.perform(get("/api/conversations/{conversationId}/messages", conversationId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void streamEndpointEmitsMetadataDeltasAndCompletion() throws Exception {
+        MvcResult started = mockMvc.perform(post("/api/agent/stream")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.TEXT_EVENT_STREAM)
+                        .content("{\"question\":\"请分析 Java 代码\"}"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(started))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("event:meta")))
+                .andExpect(content().string(containsString("event:delta")))
+                .andExpect(content().string(containsString("Streamed ")))
+                .andExpect(content().string(containsString("event:done")));
+    }
+
+    @Test
+    void streamFailureEmitsErrorAndDoesNotPersistPartialAnswer() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/conversations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Failed stream\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String conversationId = objectMapper.readTree(createResponse).get("id").asText();
+        given(providerDispatcher.stream(any(), any())).willReturn(Flux.concat(
+                Flux.just("partial text"),
+                Flux.error(new ModelProviderException("Stream interrupted"))));
+
+        MvcResult started = mockMvc.perform(post("/api/agent/stream")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.TEXT_EVENT_STREAM)
+                        .content("{\"question\":\"请分析 Java 代码\",\"conversationId\":\""
+                                + conversationId + "\"}"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(started))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("event:error")))
+                .andExpect(content().string(containsString("Stream interrupted")));
+        mockMvc.perform(get("/api/conversations/{conversationId}/messages", conversationId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
