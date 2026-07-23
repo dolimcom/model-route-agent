@@ -21,8 +21,49 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DefaultSemanticRouterTest {
+
+    @Test
+    void reportsUnavailableUntilADegradedSnapshotCanBeLoaded() {
+        SemanticEncoder encoder = new SemanticEncoder() {
+            @Override
+            public List<double[]> encodeAll(List<String> texts) {
+                throw new IllegalStateException("encoder offline");
+            }
+
+            @Override
+            public String version() {
+                return "offline";
+            }
+        };
+        RouteDefinitionProvider provider = new RouteDefinitionProvider() {
+            @Override
+            public RouteCorpus load() {
+                throw new IllegalStateException("routes unavailable");
+            }
+
+            @Override
+            public String description() {
+                return "unavailable";
+            }
+        };
+        RouteSnapshotManager manager = new RouteSnapshotManager(
+                provider, encoder, new RouteSnapshotFactory(), List.of(), false);
+        DefaultSemanticRouter router = new DefaultSemanticRouter(
+                encoder,
+                manager,
+                new InMemoryRouteIndex(new CosineSimilarityScorer(), new KeywordRuleScorer()),
+                new ConfigurableRoutingPolicy(new HeuristicConfidenceCalibrator()),
+                List.of());
+
+        assertThat(manager.reload().success()).isFalse();
+        assertThat(manager.available()).isFalse();
+        assertThatThrownBy(() -> router.route(RoutingRequest.of("hello")))
+                .isInstanceOf(com.dolimcom.semanticrouter.exception.SemanticRouterException.class)
+                .hasMessageContaining("snapshot is not available");
+    }
 
     @Test
     void shouldRespectHardHint() {

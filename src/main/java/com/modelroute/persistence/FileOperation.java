@@ -48,6 +48,12 @@ public class FileOperation {
     @Column(name = "before_content", columnDefinition = "MEDIUMTEXT")
     private String beforeContent;
 
+    @Column(name = "expected_before_hash", length = 64)
+    private String expectedBeforeHash;
+
+    @Column(name = "after_hash", length = 64)
+    private String afterHash;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_mode", nullable = false, length = 20)
     private FileApprovalMode approvalMode;
@@ -82,6 +88,7 @@ public class FileOperation {
             String sourcePath,
             String targetPath,
             String proposedContent,
+            String expectedBeforeHash,
             FileApprovalMode approvalMode) {
         this.operationId = UUID.randomUUID().toString();
         this.conversationId = conversationId;
@@ -90,6 +97,7 @@ public class FileOperation {
         this.sourcePath = sourcePath;
         this.targetPath = targetPath;
         this.proposedContent = proposedContent;
+        this.expectedBeforeHash = expectedBeforeHash;
         this.approvalMode = approvalMode;
         this.status = FileOperationStatus.PENDING;
     }
@@ -130,6 +138,14 @@ public class FileOperation {
         return beforeContent;
     }
 
+    public String getExpectedBeforeHash() {
+        return expectedBeforeHash;
+    }
+
+    public String getAfterHash() {
+        return afterHash;
+    }
+
     public FileApprovalMode getApprovalMode() {
         return approvalMode;
     }
@@ -158,8 +174,8 @@ public class FileOperation {
         return rolledBackAt;
     }
 
-    public void approve() {
-        status = FileOperationStatus.APPROVED;
+    public void startExecution() {
+        status = FileOperationStatus.EXECUTING;
         approvedAt = LocalDateTime.now();
         errorMessage = null;
     }
@@ -169,15 +185,26 @@ public class FileOperation {
         errorMessage = null;
     }
 
-    public void executed(String beforeContent) {
+    public void executed(String beforeContent, String afterHash) {
         this.beforeContent = beforeContent;
+        this.afterHash = afterHash;
         status = FileOperationStatus.EXECUTED;
         executedAt = LocalDateTime.now();
         errorMessage = null;
     }
 
-    public void failed(String errorMessage) {
-        status = FileOperationStatus.FAILED;
+    public void executionFailed(String errorMessage) {
+        status = FileOperationStatus.EXECUTION_FAILED;
+        this.errorMessage = errorMessage;
+    }
+
+    public void startRollback() {
+        status = FileOperationStatus.ROLLING_BACK;
+        errorMessage = null;
+    }
+
+    public void rollbackFailed(String errorMessage) {
+        status = FileOperationStatus.ROLLBACK_FAILED;
         this.errorMessage = errorMessage;
     }
 

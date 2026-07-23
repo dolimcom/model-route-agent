@@ -19,6 +19,7 @@ class SemanticRouterAutoConfigurationTest {
             .withUserConfiguration(TestConfiguration.class)
             .withPropertyValues(
                     "semantic.router.enabled=true",
+                    "semantic.router.startup-mode=FAIL_FAST",
                     "semantic.router.routes-location=classpath:semantic-router/routes.yml"
             );
 

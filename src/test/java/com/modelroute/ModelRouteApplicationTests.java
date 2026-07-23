@@ -54,7 +54,33 @@ class ModelRouteApplicationTests {
     void healthEndpointReturnsUp() throws Exception {
         mockMvc.perform(get("/api/agent/health"))
                 .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Content-Security-Policy", containsString("default-src 'self'")))
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void rejectsCrossSiteStateChangingRequest() throws Exception {
+        mockMvc.perform(post("/api/conversations")
+                        .header("Origin", "https://attacker.example")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void rejectsCrossSiteSemanticRouterReload() throws Exception {
+        mockMvc.perform(post("/actuator/semanticrouter")
+                        .header("Sec-Fetch-Site", "cross-site"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void directFileMutationApiIsDisabledByDefault() throws Exception {
+        mockMvc.perform(post("/api/files/agent-workspace/files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"path\":\"unsafe.txt\",\"content\":\"test\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

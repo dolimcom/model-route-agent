@@ -31,9 +31,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
 
 @AutoConfiguration
@@ -51,14 +52,18 @@ public class SemanticRouterAutoConfiguration {
     @ConditionalOnMissingBean
     SemanticEncoder semanticEncoder(SemanticRouterProperties properties) {
         URI baseUri = URI.create(properties.getLocalModel().getBaseUrl());
-        Duration timeout = properties.getReadTimeout();
         return switch (properties.getLocalModel().getProvider()) {
-            case OLLAMA -> new OllamaEmbeddingEncoder(baseUri, properties.getLocalModel().getModel(), timeout);
+            case OLLAMA -> new OllamaEmbeddingEncoder(
+                    baseUri,
+                    properties.getLocalModel().getModel(),
+                    properties.getConnectTimeout(),
+                    properties.getReadTimeout());
             case LM_STUDIO, LOCAL_AI, OPENAI_COMPATIBLE -> new OpenAiCompatibleEmbeddingEncoder(
                     baseUri,
                     properties.getLocalModel().getModel(),
                     properties.getLocalModel().getApiKey(),
-                    timeout
+                    properties.getConnectTimeout(),
+                    properties.getReadTimeout()
             );
         };
     }
@@ -67,12 +72,18 @@ public class SemanticRouterAutoConfiguration {
     @ConditionalOnMissingBean
     LocalModelDiscoveryClient localModelDiscoveryClient(SemanticRouterProperties properties) {
         URI baseUri = URI.create(properties.getLocalModel().getBaseUrl());
-        Duration timeout = properties.getReadTimeout();
         return switch (properties.getLocalModel().getProvider()) {
-            case OLLAMA -> new OllamaDiscoveryClient(baseUri, timeout);
-            case LM_STUDIO -> new OpenAiCompatibleDiscoveryClient("LM_STUDIO", baseUri, properties.getLocalModel().getApiKey(), timeout);
-            case LOCAL_AI -> new OpenAiCompatibleDiscoveryClient("LOCAL_AI", baseUri, properties.getLocalModel().getApiKey(), timeout);
-            case OPENAI_COMPATIBLE -> new OpenAiCompatibleDiscoveryClient("OPENAI_COMPATIBLE", baseUri, properties.getLocalModel().getApiKey(), timeout);
+            case OLLAMA -> new OllamaDiscoveryClient(
+                    baseUri, properties.getConnectTimeout(), properties.getReadTimeout());
+            case LM_STUDIO -> new OpenAiCompatibleDiscoveryClient(
+                    "LM_STUDIO", baseUri, properties.getLocalModel().getApiKey(),
+                    properties.getConnectTimeout(), properties.getReadTimeout());
+            case LOCAL_AI -> new OpenAiCompatibleDiscoveryClient(
+                    "LOCAL_AI", baseUri, properties.getLocalModel().getApiKey(),
+                    properties.getConnectTimeout(), properties.getReadTimeout());
+            case OPENAI_COMPATIBLE -> new OpenAiCompatibleDiscoveryClient(
+                    "OPENAI_COMPATIBLE", baseUri, properties.getLocalModel().getApiKey(),
+                    properties.getConnectTimeout(), properties.getReadTimeout());
         };
     }
 
@@ -129,10 +140,21 @@ public class SemanticRouterAutoConfiguration {
             RouteDefinitionProvider routeDefinitionProvider,
             SemanticEncoder semanticEncoder,
             RouteSnapshotFactory routeSnapshotFactory,
-            ObjectProvider<RoutingEventListener> listenersProvider
+            ObjectProvider<RoutingEventListener> listenersProvider,
+            ObjectProvider<TaskExecutor> taskExecutorProvider,
+            SemanticRouterProperties properties
     ) {
         List<RoutingEventListener> listeners = listenersProvider.orderedStream().toList();
-        return new RouteSnapshotManager(routeDefinitionProvider, semanticEncoder, routeSnapshotFactory, listeners);
+        RouteSnapshotManager manager = new RouteSnapshotManager(
+                routeDefinitionProvider, semanticEncoder, routeSnapshotFactory, listeners, false);
+        switch (properties.getStartupMode()) {
+            case FAIL_FAST -> manager.initializeOrThrow();
+            case DEGRADED -> manager.reload();
+            case ASYNC -> taskExecutorProvider
+                    .getIfAvailable(() -> new SimpleAsyncTaskExecutor("semantic-router-init-"))
+                    .execute(manager::reload);
+        }
+        return manager;
     }
 
     @Bean
@@ -142,10 +164,17 @@ public class SemanticRouterAutoConfiguration {
             RouteSnapshotManager routeSnapshotManager,
             RouteIndex routeIndex,
             RoutingPolicy routingPolicy,
-            ObjectProvider<RoutingEventListener> listenersProvider
+            ObjectProvider<RoutingEventListener> listenersProvider,
+            SemanticRouterProperties properties
     ) {
         List<RoutingEventListener> listeners = listenersProvider.orderedStream().toList();
-        return new DefaultSemanticRouter(semanticEncoder, routeSnapshotManager, routeIndex, routingPolicy, listeners);
+        return new DefaultSemanticRouter(
+                semanticEncoder,
+                routeSnapshotManager,
+                routeIndex,
+                routingPolicy,
+                listeners,
+                properties.getInputPreviewLength());
     }
 
     @Bean

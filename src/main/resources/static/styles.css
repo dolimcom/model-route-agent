@@ -420,7 +420,9 @@ button { color: inherit; }
 
 .operation-card { display: grid; gap: 8px; margin-bottom: 9px; padding: 11px; border: 1px solid var(--line); border-left: 3px solid var(--forest); border-radius: 9px; background: rgba(255, 253, 247, 0.74); }
 .operation-card.status-pending { border-left-color: var(--citrus); }
-.operation-card.status-rejected, .operation-card.status-failed { border-left-color: var(--danger); }
+.operation-card.status-rejected,
+.operation-card.status-execution_failed,
+.operation-card.status-rollback_failed { border-left-color: var(--danger); }
 .operation-card.status-rolled_back { border-left-color: var(--muted); opacity: 0.75; }
 .operation-head { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
 .operation-head strong { font-family: var(--mono); font-size: 0.61rem; }

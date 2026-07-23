@@ -67,6 +67,7 @@ models_*.local.yml
 *.sqlite3
 *.mv.db
 *.trace.db
+*.sql
 
 # JVM diagnostics
 hs_err_pid*

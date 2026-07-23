@@ -12,6 +12,7 @@ public class SemanticRouterProperties {
     private Duration connectTimeout = Duration.ofSeconds(3);
     private Duration readTimeout = Duration.ofSeconds(20);
     private int inputPreviewLength = 96;
+    private StartupMode startupMode = StartupMode.FAIL_FAST;
     private LocalModelProperties localModel = new LocalModelProperties();
 
     public boolean isEnabled() {
@@ -52,6 +53,14 @@ public class SemanticRouterProperties {
 
     public void setInputPreviewLength(int inputPreviewLength) {
         this.inputPreviewLength = inputPreviewLength;
+    }
+
+    public StartupMode getStartupMode() {
+        return startupMode;
+    }
+
+    public void setStartupMode(StartupMode startupMode) {
+        this.startupMode = startupMode;
     }
 
     public LocalModelProperties getLocalModel() {
@@ -107,5 +116,11 @@ public class SemanticRouterProperties {
         LM_STUDIO,
         LOCAL_AI,
         OPENAI_COMPATIBLE
+    }
+
+    public enum StartupMode {
+        FAIL_FAST,
+        DEGRADED,
+        ASYNC
     }
 }

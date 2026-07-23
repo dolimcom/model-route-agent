@@ -16,6 +16,7 @@ public class FileAccessProperties {
 
     private long maxReadBytes = 1024 * 1024;
     private long maxWriteBytes = 1024 * 1024;
+    private boolean directMutationEnabled;
 
     public List<AllowedRoot> getAllowedRoots() {
         return allowedRoots;
@@ -39,6 +40,14 @@ public class FileAccessProperties {
 
     public void setMaxWriteBytes(long maxWriteBytes) {
         this.maxWriteBytes = maxWriteBytes;
+    }
+
+    public boolean isDirectMutationEnabled() {
+        return directMutationEnabled;
+    }
+
+    public void setDirectMutationEnabled(boolean directMutationEnabled) {
+        this.directMutationEnabled = directMutationEnabled;
     }
 
     public static class AllowedRoot {

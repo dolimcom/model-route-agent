@@ -23,6 +23,10 @@ public class RouteSnapshotFactory {
             if (routeEmbeddings.isEmpty()) {
                 throw new SemanticRouterException("No embeddings generated for route " + route.getRouteId());
             }
+            if (routeEmbeddings.size() != route.getUtterances().size()) {
+                throw new SemanticRouterException("Embedding count mismatch for route " + route.getRouteId()
+                        + ": expected " + route.getUtterances().size() + " but received " + routeEmbeddings.size());
+            }
             routes.put(route.getRouteId(), route);
             embeddings.put(route.getRouteId(), routeEmbeddings);
             centroids.put(route.getRouteId(), centroid(routeEmbeddings));
@@ -42,6 +46,9 @@ public class RouteSnapshotFactory {
 
     private double[] centroid(List<double[]> vectors) {
         int size = vectors.get(0).length;
+        if (size == 0) {
+            throw new SemanticRouterException("Embedding vectors must not be empty");
+        }
         double[] centroid = new double[size];
         for (double[] vector : vectors) {
             if (vector.length != size) {
