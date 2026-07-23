@@ -4,6 +4,8 @@ CREATE DATABASE IF NOT EXISTS model_route_agent
 
 USE model_route_agent;
 
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS conversation (
     id BIGINT NOT NULL AUTO_INCREMENT,
     conversation_id VARCHAR(48) NOT NULL,
@@ -46,6 +48,8 @@ CREATE TABLE IF NOT EXISTS file_operation (
     target_path VARCHAR(1024) NULL,
     proposed_content MEDIUMTEXT NULL,
     before_content MEDIUMTEXT NULL,
+    expected_before_hash VARCHAR(64) NULL,
+    after_hash VARCHAR(64) NULL,
     approval_mode VARCHAR(20) NOT NULL,
     status VARCHAR(24) NOT NULL,
     error_message TEXT NULL,
