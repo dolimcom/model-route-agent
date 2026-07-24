@@ -21,11 +21,22 @@ public class RouteSnapshotManager {
     private final AtomicReference<String> lastReloadError = new AtomicReference<>();
 
     public RouteSnapshotManager(RouteDefinitionProvider provider, SemanticEncoder encoder, RouteSnapshotFactory snapshotFactory, List<RoutingEventListener> listeners) {
+        this(provider, encoder, snapshotFactory, listeners, true);
+    }
+
+    public RouteSnapshotManager(
+            RouteDefinitionProvider provider,
+            SemanticEncoder encoder,
+            RouteSnapshotFactory snapshotFactory,
+            List<RoutingEventListener> listeners,
+            boolean initialize) {
         this.provider = provider;
         this.encoder = encoder;
         this.snapshotFactory = snapshotFactory;
         this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
-        reloadOrThrow();
+        if (initialize) {
+            initializeOrThrow();
+        }
     }
 
     public RouteSnapshot currentSnapshot() {
@@ -40,7 +51,11 @@ public class RouteSnapshotManager {
         return lastReloadError.get();
     }
 
-    public SnapshotReloadResult reload() {
+    public boolean available() {
+        return currentSnapshot.get() != null;
+    }
+
+    public synchronized SnapshotReloadResult reload() {
         try {
             RouteSnapshot snapshot = snapshotFactory.build(provider.load(), encoder);
             currentSnapshot.set(snapshot);
@@ -57,10 +72,11 @@ public class RouteSnapshotManager {
         }
     }
 
-    private void reloadOrThrow() {
+    public SnapshotReloadResult initializeOrThrow() {
         SnapshotReloadResult result = reload();
         if (!result.success()) {
             throw new IllegalStateException("Unable to initialize route snapshot: " + result.message());
         }
+        return result;
     }
 }

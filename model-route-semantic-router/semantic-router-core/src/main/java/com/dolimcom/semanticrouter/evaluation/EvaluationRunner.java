@@ -163,9 +163,9 @@ public class EvaluationRunner {
         List<Double> f1Scores = new ArrayList<>();
         for (String label : confusion.keySet()) {
             int tp = confusion.getOrDefault(label, Map.of()).getOrDefault(label, 0);
-            int fp = confusion.values().stream()
-                    .filter(entry -> !entry.equals(confusion.get(label)))
-                    .mapToInt(entry -> entry.getOrDefault(label, 0))
+            int fp = confusion.entrySet().stream()
+                    .filter(entry -> !entry.getKey().equals(label))
+                    .mapToInt(entry -> entry.getValue().getOrDefault(label, 0))
                     .sum();
             int fn = confusion.getOrDefault(label, Map.of()).entrySet().stream()
                     .filter(entry -> !entry.getKey().equals(label))

@@ -767,8 +767,9 @@ function operationCard(operation, pendingDock) {
             operationButton("批准", "approve", () => decideOperation(operation.operationId, "approve")),
             operationButton("拒绝", "reject", () => decideOperation(operation.operationId, "reject")),
         );
-    } else if (operation.status === "EXECUTED") {
-        actions.append(operationButton("撤销操作", "undo", () => rollbackOperation(operation.operationId)));
+    } else if (operation.status === "EXECUTED" || operation.status === "ROLLBACK_FAILED") {
+        const label = operation.status === "ROLLBACK_FAILED" ? "重试撤销" : "撤销操作";
+        actions.append(operationButton(label, "undo", () => rollbackOperation(operation.operationId)));
     }
     if (actions.childElementCount) article.append(actions);
     return article;
@@ -795,7 +796,7 @@ async function decideOperation(operationId, decision) {
         showToast("操作已批准并执行");
     } else if (result.status === "REJECTED") {
         showToast("操作已拒绝");
-    } else if (result.status === "FAILED") {
+    } else if (result.status === "EXECUTION_FAILED") {
         showToast(`执行失败：${result.errorMessage || "未知文件操作错误"}`, true);
     } else {
         showToast(`操作状态：${result.status}`);
@@ -807,7 +808,7 @@ async function rollbackOperation(operationId) {
     const result = await api(`/api/file-operations/${encodeURIComponent(operationId)}/rollback`, {method: "POST"});
     await Promise.all([loadOperations(), loadFiles()]);
     showToast(result.status === "ROLLED_BACK" ? "操作已撤销" : (result.errorMessage || result.status),
-        result.status === "FAILED");
+        result.status === "ROLLBACK_FAILED");
 }
 
 async function previewOperation(operation) {

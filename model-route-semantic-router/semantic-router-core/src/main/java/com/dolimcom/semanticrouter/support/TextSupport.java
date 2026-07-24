@@ -12,6 +12,9 @@ public final class TextSupport {
     }
 
     public static String preview(String value, int maxLength) {
+        if (maxLength <= 0) {
+            return "";
+        }
         String normalized = value == null ? "" : value.replaceAll("\\s+", " ").trim();
         if (normalized.length() <= maxLength) {
             return normalized;

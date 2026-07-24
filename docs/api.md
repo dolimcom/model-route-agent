@@ -57,7 +57,7 @@ Key 值只允许写入，不会通过接口返回。
 - `GET /api/files/{rootId}/entries?path=...`
 - `GET /api/files/{rootId}/content?path=...`
 
-由于浏览器不会暴露原始绝对路径，multipart 上传得到的是只读副本。通过原生选择器选中的文件只授权该文件本身，并可通过常规审批和回滚流程执行 `UPDATE_FILE`。用于 API 调试的直接创建、更新、重命名和删除端点仍然保留，但主界面会把模型生成的修改统一转换为操作提案。
+由于浏览器不会暴露原始绝对路径，multipart 上传得到的是只读副本。通过原生选择器选中的文件只授权该文件本身，并可通过常规审批和回滚流程执行 `UPDATE_FILE`。直接创建、更新、重命名和删除端点默认不注册；只有设置 `model-route.files.direct-mutation-enabled=true` 后才可用于本地 API 调试。
 
 ## 文件操作生命周期
 
@@ -67,6 +67,13 @@ Key 值只允许写入，不会通过接口返回。
 - `POST /api/file-operations/{operationId}/reject`
 - `POST /api/file-operations/{operationId}/rollback`
 - `POST /api/file-operations/rollback-last`
+
+状态包括 `PENDING`、`EXECUTING`、`REJECTED`、`EXECUTED`、`EXECUTION_FAILED`、`ROLLING_BACK`、`ROLLBACK_FAILED` 和 `ROLLED_BACK`。审批或回滚时发现文件被外部修改，会进入相应失败状态并保留错误原因，不会覆盖外部修改。
+
+## 语义路由运维
+
+- `GET /actuator/semanticrouter`：查看快照是否可用、版本、路由数量和最后一次重载错误。
+- `POST /actuator/semanticrouter`：重新读取语料并重建向量快照；失败时继续保留最后一个可用快照。
 
 可执行的 IntelliJ HTTP Client 示例见 `agent-api.http`。
 
@@ -133,7 +140,7 @@ Key values are write-only.
 - `GET /api/files/{rootId}/entries?path=...`
 - `GET /api/files/{rootId}/content?path=...`
 
-Browser multipart uploads are read-only copies because browsers do not expose the original absolute path. Native selected files authorize only that exact file and support `UPDATE_FILE` through the normal approval and rollback lifecycle. Direct create/update/rename/delete file endpoints remain available for API debugging, but the main UI routes model-generated changes through proposals.
+Browser multipart uploads are read-only copies because browsers do not expose the original absolute path. Native selected files authorize only that exact file and support `UPDATE_FILE` through the normal approval and rollback lifecycle. Direct create/update/rename/delete endpoints are not registered by default; set `model-route.files.direct-mutation-enabled=true` only for local API debugging.
 
 ## File operation lifecycle
 
@@ -143,5 +150,12 @@ Browser multipart uploads are read-only copies because browsers do not expose th
 - `POST /api/file-operations/{operationId}/reject`
 - `POST /api/file-operations/{operationId}/rollback`
 - `POST /api/file-operations/rollback-last`
+
+Statuses are `PENDING`, `EXECUTING`, `REJECTED`, `EXECUTED`, `EXECUTION_FAILED`, `ROLLING_BACK`, `ROLLBACK_FAILED`, and `ROLLED_BACK`. Approval and rollback conflict checks preserve external edits and record the reason in the corresponding failure state.
+
+## Semantic-router operations
+
+- `GET /actuator/semanticrouter`: inspect availability, versions, route count and the last reload error.
+- `POST /actuator/semanticrouter`: rebuild the snapshot; a failed reload keeps the last known-good snapshot.
 
 See `agent-api.http` for executable IntelliJ HTTP Client examples.

@@ -23,11 +23,19 @@ abstract class AbstractHttpEmbeddingEncoder implements SemanticEncoder {
     protected final Duration timeout;
 
     protected AbstractHttpEmbeddingEncoder(URI baseUri, String model, Duration timeout) {
-        this.httpClient = HttpClient.newBuilder().connectTimeout(timeout).build();
+        this(baseUri, model, timeout, timeout);
+    }
+
+    protected AbstractHttpEmbeddingEncoder(
+            URI baseUri,
+            String model,
+            Duration connectTimeout,
+            Duration requestTimeout) {
+        this.httpClient = HttpClient.newBuilder().connectTimeout(connectTimeout).build();
         this.objectMapper = new ObjectMapper();
         this.baseUri = baseUri;
         this.model = model;
-        this.timeout = timeout;
+        this.timeout = requestTimeout;
     }
 
     protected JsonNode postJson(URI uri, Object body, String bearerToken) {
@@ -45,8 +53,10 @@ abstract class AbstractHttpEmbeddingEncoder implements SemanticEncoder {
                 throw new SemanticRouterException("Embedding request failed: " + response.statusCode() + " " + response.body());
             }
             return objectMapper.readTree(response.body());
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            throw new SemanticRouterException("Embedding request failed", ex);
+        } catch (IOException ex) {
             throw new SemanticRouterException("Embedding request failed", ex);
         }
     }

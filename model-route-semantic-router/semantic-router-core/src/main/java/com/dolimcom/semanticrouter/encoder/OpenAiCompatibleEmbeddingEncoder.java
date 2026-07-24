@@ -17,6 +17,16 @@ public class OpenAiCompatibleEmbeddingEncoder extends AbstractHttpEmbeddingEncod
         this.apiKey = apiKey;
     }
 
+    public OpenAiCompatibleEmbeddingEncoder(
+            URI baseUri,
+            String model,
+            String apiKey,
+            Duration connectTimeout,
+            Duration requestTimeout) {
+        super(baseUri, model, connectTimeout, requestTimeout);
+        this.apiKey = apiKey;
+    }
+
     @Override
     public List<double[]> encodeAll(List<String> texts) {
         JsonNode response = postJson(

@@ -2,9 +2,11 @@ package com.modelroute.domain;
 
 public enum FileOperationStatus {
     PENDING,
-    APPROVED,
+    EXECUTING,
     REJECTED,
     EXECUTED,
-    FAILED,
+    EXECUTION_FAILED,
+    ROLLING_BACK,
+    ROLLBACK_FAILED,
     ROLLED_BACK
 }

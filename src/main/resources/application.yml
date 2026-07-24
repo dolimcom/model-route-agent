@@ -23,6 +23,7 @@ spring:
       max-request-size: 2MB
 
 server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
   port: ${SERVER_PORT:8080}
 
 management:
@@ -35,6 +36,8 @@ semantic:
   router:
     enabled: true
     routes-location: classpath:semantic-router/routes.yml
+    # Start with rule routing while the local embedding model warms up.
+    startup-mode: ASYNC
     # The first local embedding request may need to cold-start the model.
     read-timeout: 60s
     local-model:
@@ -52,6 +55,8 @@ model-route:
   files:
     # Workspaces start empty and are added explicitly from the local UI.
     allowed-roots: []
+    # Unsafe debugging endpoints bypassing proposal/approval are disabled by default.
+    direct-mutation-enabled: false
     max-read-bytes: 1048576
     max-write-bytes: 1048576
 

@@ -17,6 +17,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -89,10 +91,10 @@ public class FileAccessService {
     public FileSnapshot snapshot(String rootId, String relativePath) {
         Path target = resolveExistingPath(rootId, relativePath);
         if (Files.isDirectory(target)) {
-            return new FileSnapshot(true, null);
+            return new FileSnapshot(true, null, "directory");
         }
         FileContentResponse content = read(rootId, relativePath);
-        return new FileSnapshot(false, content.content());
+        return new FileSnapshot(false, content.content(), sha256(content.content()));
     }
 
     public FileOperationResponse createDirectory(String rootId, String relativePath) {
@@ -292,6 +294,16 @@ public class FileAccessService {
         if (size > maxWriteBytes) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
                     "Content exceeds configured write limit of " + maxWriteBytes + " bytes");
+        }
+    }
+
+    private String sha256(String content) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(content.getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
     }
 

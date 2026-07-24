@@ -22,6 +22,7 @@
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Embedding 端点 |
 | `EMBEDDING_MODEL` | `bge-m3:latest` | 语义编码模型 |
 | `SERVER_PORT` | `8080` | HTTP 端口 |
+| `SERVER_ADDRESS` | `127.0.0.1` | HTTP 监听地址；保持回环地址可避免意外暴露到局域网 |
 
 ## 模型字段
 
@@ -46,6 +47,12 @@ Provider 推断规则：
 ## 路由语料
 
 生产路由示例和阈值位于 `src/main/resources/semantic-router/routes.yml`。业务映射、上下文和焦点标记位于 `src/main/resources/router.yml`。修改任一文件后，都应使用 `scripts/` 下的脚本重新评估，并与 `docs/` 中的报告比较。
+
+主应用使用 `semantic.router.startup-mode=ASYNC`：Ollama 不可用或模型仍在冷启动时，应用先以规则路由工作，后台构建语义快照。`FAIL_FAST` 会在初始化失败时阻止启动，`DEGRADED` 会同步尝试一次后降级。可通过 `GET /actuator/semanticrouter` 查看 `available` 和 `lastReloadError`，通过 `POST /actuator/semanticrouter` 手动重载。连接、读取和日志预览长度分别由 `connect-timeout`、`read-timeout`、`input-preview-length` 控制。
+
+## 文件操作兼容性
+
+生产路径应使用 `/api/file-operations` 提案和审批接口。调试用直接写接口默认不存在；如确有本地调试需要，可设置 `model-route.files.direct-mutation-enabled=true`。升级已有数据库时需执行一次 `database/migrations/20260722_file_operation_conflict_tracking.sql`，为 `file_operation` 增加冲突检测哈希列并迁移旧状态；新数据库直接使用 `database/schema.sql`。
 
 ## 外部工作区配置
 
@@ -79,6 +86,7 @@ The chooser state stores separate last-visited directories for workspace and att
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | embedding endpoint |
 | `EMBEDDING_MODEL` | `bge-m3:latest` | semantic encoder |
 | `SERVER_PORT` | `8080` | HTTP port |
+| `SERVER_ADDRESS` | `127.0.0.1` | HTTP bind address; keep loopback to avoid accidental LAN exposure |
 
 ## Model fields
 
@@ -103,6 +111,12 @@ Localhost-compatible endpoints may omit a key. Remote compatible endpoints requi
 ## Route corpus
 
 Production route examples and thresholds are in `src/main/resources/semantic-router/routes.yml`. Business mappings and context/focus markers are in `src/main/resources/router.yml`. Changes to either should be evaluated with the scripts under `scripts/` and compared against the reports in `docs/`.
+
+The main application uses `semantic.router.startup-mode=ASYNC`: while Ollama is unavailable or warming up, rule routing remains available and the semantic snapshot is built in the background. `FAIL_FAST` aborts startup on initialization failure; `DEGRADED` makes one synchronous attempt and continues. Inspect `available` and `lastReloadError` with `GET /actuator/semanticrouter`, and trigger a reload with `POST /actuator/semanticrouter`. `connect-timeout`, `read-timeout`, and `input-preview-length` configure connection timeout, request timeout, and logged input preview length.
+
+## File-operation compatibility
+
+Production changes should use the `/api/file-operations` proposal and approval endpoints. Direct mutation endpoints are absent by default; enable them only for local debugging with `model-route.files.direct-mutation-enabled=true`. Existing databases must run `database/migrations/20260722_file_operation_conflict_tracking.sql` once; new databases should use `database/schema.sql`.
 
 ## External workspace configuration
 

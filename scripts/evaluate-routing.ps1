@@ -27,7 +27,7 @@ foreach ($line in Get-Content -LiteralPath $DatasetPath) {
             ExpectedTask = $currentTask
             ExpectedModel = switch ($currentTask) {
                 "GENERAL" { "general" }
-                "DAILY" { "general" }
+                "DAILY" { "daily" }
                 "LITERARY" { "literary" }
                 "CODING" { "coding" }
                 "MATH" { "math" }

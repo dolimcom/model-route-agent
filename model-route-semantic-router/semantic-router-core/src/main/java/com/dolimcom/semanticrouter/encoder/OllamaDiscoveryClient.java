@@ -21,9 +21,13 @@ public class OllamaDiscoveryClient implements LocalModelDiscoveryClient {
     private final Duration timeout;
 
     public OllamaDiscoveryClient(URI baseUri, Duration timeout) {
+        this(baseUri, timeout, timeout);
+    }
+
+    public OllamaDiscoveryClient(URI baseUri, Duration connectTimeout, Duration requestTimeout) {
         this.baseUri = baseUri;
-        this.timeout = timeout;
-        this.httpClient = HttpClient.newBuilder().connectTimeout(timeout).build();
+        this.timeout = requestTimeout;
+        this.httpClient = HttpClient.newBuilder().connectTimeout(connectTimeout).build();
     }
 
     @Override
@@ -53,8 +57,10 @@ public class OllamaDiscoveryClient implements LocalModelDiscoveryClient {
                 }
             }
             return models;
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            throw new SemanticRouterException("Ollama discovery failed", ex);
+        } catch (IOException ex) {
             throw new SemanticRouterException("Ollama discovery failed", ex);
         }
     }

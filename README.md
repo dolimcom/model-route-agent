@@ -54,7 +54,7 @@ docker compose up -d mysql
 
 Docker 示例创建的应用账号是 `coder/coder`，启动应用前设置 `DB_PASSWORD=coder`；直接使用本机 MySQL 时仍可保留默认空密码。
 
-访问 [http://localhost:8080](http://localhost:8080)。首次构建语义路由向量快照时会调用本地 embedding 模型，冷启动可能需要数十秒到数分钟。
+访问 [http://localhost:8080](http://localhost:8080)。应用默认只监听 `127.0.0.1`。语义路由向量快照在后台异步构建；预热期间请求会降级到规则路由，不会阻塞应用启动。可通过 `GET /actuator/semanticrouter` 查看快照状态。
 
 ### 2. 配置真实模型
 
@@ -102,6 +102,7 @@ node --check src/main/resources/static/app.js
 - 仅支持 UTF-8 文本附件和文本文件上下文，不解析 PDF、Office 或图片。
 - 回形针原生选择的本地文件可审批修改；浏览器 multipart 上传是只读副本。
 - 回滚保存单次操作的文件内容快照，不是完整版本控制系统。
+- 直接文件写 API 默认关闭；Agent 修改必须进入提案、审批、审计和冲突检测流程。
 - 原生目录选择器要求应用运行在有桌面的本机环境；无头服务器应使用外部 `workspaces.local.yml`。
 - 当前是单机单用户设计，不包含登录、租户隔离和远程执行任意程序能力。
 

@@ -3,6 +3,7 @@ package com.dolimcom.semanticrouter.core;
 import com.dolimcom.semanticrouter.api.RoutingEventListener;
 import com.dolimcom.semanticrouter.api.SemanticEncoder;
 import com.dolimcom.semanticrouter.api.SemanticRouter;
+import com.dolimcom.semanticrouter.exception.SemanticRouterException;
 import com.dolimcom.semanticrouter.index.RouteIndex;
 import com.dolimcom.semanticrouter.model.ReasonCode;
 import com.dolimcom.semanticrouter.model.RouteHintType;
@@ -25,6 +26,7 @@ public class DefaultSemanticRouter implements SemanticRouter {
     private final RouteIndex routeIndex;
     private final RoutingPolicy routingPolicy;
     private final List<RoutingEventListener> listeners;
+    private final int inputPreviewLength;
 
     public DefaultSemanticRouter(
             SemanticEncoder encoder,
@@ -33,20 +35,38 @@ public class DefaultSemanticRouter implements SemanticRouter {
             RoutingPolicy routingPolicy,
             List<RoutingEventListener> listeners
     ) {
+        this(encoder, snapshotManager, routeIndex, routingPolicy, listeners, 96);
+    }
+
+    public DefaultSemanticRouter(
+            SemanticEncoder encoder,
+            RouteSnapshotManager snapshotManager,
+            RouteIndex routeIndex,
+            RoutingPolicy routingPolicy,
+            List<RoutingEventListener> listeners,
+            int inputPreviewLength
+    ) {
         this.encoder = encoder;
         this.snapshotManager = snapshotManager;
         this.routeIndex = routeIndex;
         this.routingPolicy = routingPolicy;
         this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
+        if (inputPreviewLength < 0) {
+            throw new IllegalArgumentException("inputPreviewLength must not be negative");
+        }
+        this.inputPreviewLength = inputPreviewLength;
     }
 
     @Override
     public RoutingResult route(RoutingRequest request) {
         long totalStart = System.nanoTime();
         RouteSnapshot snapshot = snapshotManager.currentSnapshot();
+        if (snapshot == null) {
+            throw new SemanticRouterException("Semantic router snapshot is not available");
+        }
         String input = request.input() == null ? "" : request.input();
         String inputHash = HashingSupport.sha256(input);
-        String inputPreview = TextSupport.preview(input, 96);
+        String inputPreview = TextSupport.preview(input, inputPreviewLength);
 
         if (request.forcedRouteId() != null && snapshot.routes().containsKey(request.forcedRouteId())) {
             return publish(request, routingPolicy.override(snapshot, request, request.forcedRouteId(), ReasonCode.HARD_OVERRIDE, inputHash, inputPreview));

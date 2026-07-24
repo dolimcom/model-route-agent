@@ -23,11 +23,20 @@ public class OpenAiCompatibleDiscoveryClient implements LocalModelDiscoveryClien
     private final String apiKey;
 
     public OpenAiCompatibleDiscoveryClient(String provider, URI baseUri, String apiKey, Duration timeout) {
+        this(provider, baseUri, apiKey, timeout, timeout);
+    }
+
+    public OpenAiCompatibleDiscoveryClient(
+            String provider,
+            URI baseUri,
+            String apiKey,
+            Duration connectTimeout,
+            Duration requestTimeout) {
         this.provider = provider;
         this.baseUri = baseUri;
         this.apiKey = apiKey;
-        this.timeout = timeout;
-        this.httpClient = HttpClient.newBuilder().connectTimeout(timeout).build();
+        this.timeout = requestTimeout;
+        this.httpClient = HttpClient.newBuilder().connectTimeout(connectTimeout).build();
     }
 
     @Override
@@ -50,8 +59,10 @@ public class OpenAiCompatibleDiscoveryClient implements LocalModelDiscoveryClien
                 }
             }
             return models;
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            throw new SemanticRouterException("Model discovery failed", ex);
+        } catch (IOException ex) {
             throw new SemanticRouterException("Model discovery failed", ex);
         }
     }
